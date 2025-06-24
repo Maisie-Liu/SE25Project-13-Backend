@@ -1,0 +1,94 @@
+package com.campus.trading.repository;
+
+import com.campus.trading.entity.Item;
+import com.campus.trading.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+/**
+ * 物品数据访问接口
+ */
+@Repository
+public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificationExecutor<Item> {
+
+    /**
+     * 根据用户查询物品列表
+     *
+     * @param user     用户
+     * @param pageable 分页参数
+     * @return 物品分页列表
+     */
+    Page<Item> findByUser(User user, Pageable pageable);
+
+    /**
+     * 根据状态查询物品列表
+     *
+     * @param status   状态
+     * @param pageable 分页参数
+     * @return 物品分页列表
+     */
+    Page<Item> findByStatus(Integer status, Pageable pageable);
+
+    /**
+     * 根据分类ID查询物品列表
+     *
+     * @param categoryId 分类ID
+     * @param pageable   分页参数
+     * @return 物品分页列表
+     */
+    Page<Item> findByCategoryId(Long categoryId, Pageable pageable);
+
+    /**
+     * 根据名称模糊查询物品列表
+     *
+     * @param name     名称
+     * @param pageable 分页参数
+     * @return 物品分页列表
+     */
+    Page<Item> findByNameContaining(String name, Pageable pageable);
+
+    /**
+     * 根据价格区间查询物品列表
+     *
+     * @param minPrice 最低价格
+     * @param maxPrice 最高价格
+     * @param pageable 分页参数
+     * @return 物品分页列表
+     */
+    Page<Item> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
+
+    /**
+     * 根据热度排序查询物品列表
+     *
+     * @param pageable 分页参数
+     * @return 物品分页列表
+     */
+    Page<Item> findAllByOrderByPopularityDesc(Pageable pageable);
+
+    /**
+     * 根据用户和状态查询物品列表
+     *
+     * @param user     用户
+     * @param status   状态
+     * @param pageable 分页参数
+     * @return 物品分页列表
+     */
+    Page<Item> findByUserAndStatus(User user, Integer status, Pageable pageable);
+
+    /**
+     * 根据关键字搜索物品
+     *
+     * @param keyword  关键字
+     * @param pageable 分页参数
+     * @return 物品分页列表
+     */
+    @Query("SELECT i FROM Item i WHERE i.name LIKE %:keyword% OR i.description LIKE %:keyword%")
+    Page<Item> searchByKeyword(String keyword, Pageable pageable);
+} 
