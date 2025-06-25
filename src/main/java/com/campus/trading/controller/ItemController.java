@@ -5,7 +5,6 @@ import com.campus.trading.dto.ItemCreateRequestDTO;
 import com.campus.trading.dto.ItemDTO;
 import com.campus.trading.dto.PageResponseDTO;
 import com.campus.trading.service.ItemService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,10 +17,13 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/items")
-@RequiredArgsConstructor
 public class ItemController {
 
     private final ItemService itemService;
+    
+    public ItemController(ItemService itemService) {
+        this.itemService = itemService;
+    }
 
     /**
      * 创建物品

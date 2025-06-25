@@ -7,12 +7,12 @@ spring:
   application:
     name: campus-trading-platform
   
-  # 数据库配置
+  # 数据库配置 - 请修改为你自己的数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/campus_trading?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
-    password: 230528
+    password: 你的密码
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -25,13 +25,12 @@ spring:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     show-sql: true
     hibernate:
-      ddl-auto: create-drop
-    defer-datasource-initialization: true
+      ddl-auto: update  # 首次运行可设为create，之后改为update
     properties:
       hibernate:
         format_sql: true
   
-  # Redis配置
+  # Redis配置 - 如果没有Redis可以注释掉或配置为禁用
   redis:
     host: localhost
     port: 6379
@@ -45,7 +44,7 @@ spring:
         max-idle: 8
         min-idle: 0
   
-  # RabbitMQ配置
+  # RabbitMQ配置 - 如果没有RabbitMQ可以注释掉或配置为禁用
   rabbitmq:
     host: localhost
     port: 5672
@@ -57,7 +56,7 @@ spring:
         concurrency: 5
         max-concurrency: 10
   
-  # ElasticSearch配置
+  # ElasticSearch配置 - 如果没有ElasticSearch可以注释掉或配置为禁用
   elasticsearch:
     rest:
       uris: http://localhost:9200
@@ -70,16 +69,16 @@ spring:
 
 # JWT配置
 jwt:
-  secret: campus-trading-platform-secret-key
+  secret: campus-trading-platform-secret-key  # 生产环境应该使用更复杂的密钥
   expiration: 86400000 # 24小时
 
 # 自定义配置
 app:
-  # 文件存储路径
+  # 文件存储路径 - 根据你的环境修改
   file:
     upload-dir: ./uploads
   
-  # AI模型配置
+  # AI模型配置 - 可选功能
   ai:
     model-path: ./models/image-description-model
 
@@ -89,9 +88,4 @@ logging:
     root: info
     com.campus.trading: debug
   file:
-    name: ./logs/campus-trading.log
-
-sql:
-  init:
-    mode: always
-    data-locations: classpath:db/init.sql 
+    name: ./logs/campus-trading.log 

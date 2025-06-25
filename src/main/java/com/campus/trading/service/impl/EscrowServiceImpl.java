@@ -8,7 +8,6 @@ import com.campus.trading.repository.EscrowRepository;
 import com.campus.trading.repository.OrderRepository;
 import com.campus.trading.service.EscrowService;
 import com.campus.trading.service.UserService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,12 +24,19 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class EscrowServiceImpl implements EscrowService {
+    
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(EscrowServiceImpl.class);
 
     private final EscrowRepository escrowRepository;
     private final OrderRepository orderRepository;
     private final UserService userService;
+    
+    public EscrowServiceImpl(EscrowRepository escrowRepository, OrderRepository orderRepository, UserService userService) {
+        this.escrowRepository = escrowRepository;
+        this.orderRepository = orderRepository;
+        this.userService = userService;
+    }
 
     @Override
     @Transactional

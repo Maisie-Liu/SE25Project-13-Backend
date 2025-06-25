@@ -1,19 +1,10 @@
 package com.campus.trading.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 /**
  * 通用API响应对象
  *
  * @param <T> 响应数据类型
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class ApiResponse<T> {
 
     /**
@@ -30,6 +21,39 @@ public class ApiResponse<T> {
      * 响应数据
      */
     private T data;
+    
+    public ApiResponse() {
+    }
+    
+    public ApiResponse(Integer code, String message, T data) {
+        this.code = code;
+        this.message = message;
+        this.data = data;
+    }
+    
+    public Integer getCode() {
+        return code;
+    }
+    
+    public void setCode(Integer code) {
+        this.code = code;
+    }
+    
+    public String getMessage() {
+        return message;
+    }
+    
+    public void setMessage(String message) {
+        this.message = message;
+    }
+    
+    public T getData() {
+        return data;
+    }
+    
+    public void setData(T data) {
+        this.data = data;
+    }
 
     /**
      * 成功响应
@@ -39,11 +63,11 @@ public class ApiResponse<T> {
      * @return API响应对象
      */
     public static <T> ApiResponse<T> success(T data) {
-        return ApiResponse.<T>builder()
-                .code(200)
-                .message("操作成功")
-                .data(data)
-                .build();
+        ApiResponse<T> response = new ApiResponse<>();
+        response.setCode(200);
+        response.setMessage("操作成功");
+        response.setData(data);
+        return response;
     }
 
     /**
@@ -55,11 +79,11 @@ public class ApiResponse<T> {
      * @return API响应对象
      */
     public static <T> ApiResponse<T> success(String message, T data) {
-        return ApiResponse.<T>builder()
-                .code(200)
-                .message(message)
-                .data(data)
-                .build();
+        ApiResponse<T> response = new ApiResponse<>();
+        response.setCode(200);
+        response.setMessage(message);
+        response.setData(data);
+        return response;
     }
 
     /**
@@ -71,10 +95,10 @@ public class ApiResponse<T> {
      * @return API响应对象
      */
     public static <T> ApiResponse<T> error(Integer code, String message) {
-        return ApiResponse.<T>builder()
-                .code(code)
-                .message(message)
-                .build();
+        ApiResponse<T> response = new ApiResponse<>();
+        response.setCode(code);
+        response.setMessage(message);
+        return response;
     }
 
     /**

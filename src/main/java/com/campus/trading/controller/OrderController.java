@@ -4,7 +4,6 @@ import com.campus.trading.dto.ApiResponse;
 import com.campus.trading.dto.OrderDTO;
 import com.campus.trading.dto.PageResponseDTO;
 import com.campus.trading.service.OrderService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -12,10 +11,13 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/orders")
-@RequiredArgsConstructor
 public class OrderController {
 
     private final OrderService orderService;
+    
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
 
     /**
      * 创建订单
