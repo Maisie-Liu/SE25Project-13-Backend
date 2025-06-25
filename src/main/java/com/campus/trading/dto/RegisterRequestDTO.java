@@ -1,9 +1,5 @@
 package com.campus.trading.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
@@ -12,9 +8,6 @@ import javax.validation.constraints.Size;
 /**
  * 注册请求数据传输对象
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class RegisterRequestDTO {
 
     /**
@@ -56,4 +49,64 @@ public class RegisterRequestDTO {
      */
     @Pattern(regexp = "^1[3-9]\\d{9}$", message = "手机号格式不正确")
     private String phone;
+    
+    public RegisterRequestDTO() {
+    }
+    
+    public RegisterRequestDTO(String username, String password, String confirmPassword, String nickname, String email, String phone) {
+        this.username = username;
+        this.password = password;
+        this.confirmPassword = confirmPassword;
+        this.nickname = nickname;
+        this.email = email;
+        this.phone = phone;
+    }
+    
+    public String getUsername() {
+        return username;
+    }
+    
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    
+    public String getPassword() {
+        return password;
+    }
+    
+    public void setPassword(String password) {
+        this.password = password;
+    }
+    
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+    
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
+    }
+    
+    public String getNickname() {
+        return nickname;
+    }
+    
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+    
+    public String getEmail() {
+        return email;
+    }
+    
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    
+    public String getPhone() {
+        return phone;
+    }
+    
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
 } 

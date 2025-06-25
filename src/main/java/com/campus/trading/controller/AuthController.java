@@ -6,7 +6,6 @@ import com.campus.trading.dto.LoginResponseDTO;
 import com.campus.trading.dto.RegisterRequestDTO;
 import com.campus.trading.dto.UserDTO;
 import com.campus.trading.service.UserService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,10 +14,13 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final UserService userService;
+    
+    public AuthController(UserService userService) {
+        this.userService = userService;
+    }
 
     /**
      * 用户注册

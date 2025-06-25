@@ -1,9 +1,5 @@
 package com.campus.trading.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.List;
@@ -11,9 +7,6 @@ import java.util.List;
 /**
  * 物品创建请求数据传输对象
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class ItemCreateRequestDTO {
 
     /**
@@ -56,4 +49,64 @@ public class ItemCreateRequestDTO {
     @Min(value = 1, message = "物品新旧程度必须在1-10之间")
     @Max(value = 10, message = "物品新旧程度必须在1-10之间")
     private Integer condition;
+    
+    public ItemCreateRequestDTO() {
+    }
+    
+    public ItemCreateRequestDTO(String name, Long categoryId, BigDecimal price, String description, List<String> images, Integer condition) {
+        this.name = name;
+        this.categoryId = categoryId;
+        this.price = price;
+        this.description = description;
+        this.images = images;
+        this.condition = condition;
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public Long getCategoryId() {
+        return categoryId;
+    }
+    
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
+    
+    public BigDecimal getPrice() {
+        return price;
+    }
+    
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+    
+    public String getDescription() {
+        return description;
+    }
+    
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
+    public List<String> getImages() {
+        return images;
+    }
+    
+    public void setImages(List<String> images) {
+        this.images = images;
+    }
+    
+    public Integer getCondition() {
+        return condition;
+    }
+    
+    public void setCondition(Integer condition) {
+        this.condition = condition;
+    }
 } 

@@ -1,11 +1,5 @@
 package com.campus.trading.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.domain.Page;
-
 import java.util.List;
 
 /**
@@ -13,31 +7,7 @@ import java.util.List;
  *
  * @param <T> 数据类型
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class PageResponseDTO<T> {
-
-    /**
-     * 当前页码
-     */
-    private Integer pageNum;
-
-    /**
-     * 每页大小
-     */
-    private Integer pageSize;
-
-    /**
-     * 总记录数
-     */
-    private Long total;
-
-    /**
-     * 总页数
-     */
-    private Integer pages;
 
     /**
      * 数据列表
@@ -45,19 +15,73 @@ public class PageResponseDTO<T> {
     private List<T> list;
 
     /**
-     * 从Spring Data的Page对象构建分页响应对象
-     *
-     * @param page Spring Data分页对象
-     * @param <T>  数据类型
-     * @return 分页响应对象
+     * 总记录数
      */
-    public static <T> PageResponseDTO<T> from(Page<T> page) {
-        return PageResponseDTO.<T>builder()
-                .pageNum(page.getNumber() + 1)
-                .pageSize(page.getSize())
-                .total(page.getTotalElements())
-                .pages(page.getTotalPages())
-                .list(page.getContent())
-                .build();
+    private long total;
+
+    /**
+     * 当前页码
+     */
+    private int pageNum;
+
+    /**
+     * 每页大小
+     */
+    private int pageSize;
+
+    /**
+     * 总页数
+     */
+    private int pages;
+
+    public PageResponseDTO() {
+    }
+
+    public PageResponseDTO(List<T> list, long total, int pageNum, int pageSize, int pages) {
+        this.list = list;
+        this.total = total;
+        this.pageNum = pageNum;
+        this.pageSize = pageSize;
+        this.pages = pages;
+    }
+
+    public List<T> getList() {
+        return list;
+    }
+
+    public void setList(List<T> list) {
+        this.list = list;
+    }
+
+    public long getTotal() {
+        return total;
+    }
+
+    public void setTotal(long total) {
+        this.total = total;
+    }
+
+    public int getPageNum() {
+        return pageNum;
+    }
+
+    public void setPageNum(int pageNum) {
+        this.pageNum = pageNum;
+    }
+
+    public int getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageSize(int pageSize) {
+        this.pageSize = pageSize;
+    }
+
+    public int getPages() {
+        return pages;
+    }
+
+    public void setPages(int pages) {
+        this.pages = pages;
     }
 } 

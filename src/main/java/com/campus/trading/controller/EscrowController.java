@@ -4,7 +4,6 @@ import com.campus.trading.dto.ApiResponse;
 import com.campus.trading.dto.EscrowDTO;
 import com.campus.trading.dto.EscrowPaymentDTO;
 import com.campus.trading.service.EscrowService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -14,10 +13,13 @@ import java.math.BigDecimal;
  */
 @RestController
 @RequestMapping("/escrow")
-@RequiredArgsConstructor
 public class EscrowController {
 
     private final EscrowService escrowService;
+    
+    public EscrowController(EscrowService escrowService) {
+        this.escrowService = escrowService;
+    }
 
     /**
      * 创建定金托管
