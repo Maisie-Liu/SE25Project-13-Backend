@@ -58,8 +58,9 @@ public class ItemController {
      */
     @GetMapping("/{id}")
     public ApiResponse<ItemDTO> getItemById(@PathVariable Long id) {
+        // 先获取物品详情
         ItemDTO itemDTO = itemService.getItemById(id);
-        // 增加物品热度
+        // 再增加物品热度
         itemService.incrementItemPopularity(id);
         return ApiResponse.success(itemDTO);
     }
