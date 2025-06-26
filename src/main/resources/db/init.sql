@@ -123,24 +123,24 @@ CREATE TABLE IF NOT EXISTS t_favorite (
     FOREIGN KEY (item_id) REFERENCES t_item(id)
 );
 
--- 插入初始管理员用户（密码：admin123）
+-- 插入初始管理员用户（密码：123456）
 INSERT INTO t_user (username, password, nickname, email, status, create_time, update_time)
-VALUES ('admin', '$2a$10$X/uUPfqoKQKCQJ6oRyKGzOuLmJSocQht.QvfCn0VmLGPMoGcBr.Oa', '系统管理员', 'admin@example.com', 1, NOW(), NOW());
+VALUES ('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '系统管理员', 'admin@example.com', 1, NOW(), NOW());
 
 -- 插入管理员角色
 INSERT INTO t_user_roles (user_id, role) VALUES (1, 'ROLE_ADMIN');
 INSERT INTO t_user_roles (user_id, role) VALUES (1, 'ROLE_USER');
 
--- 插入测试用户（密码：password）
+-- 插入测试用户（密码：123456）
 INSERT INTO t_user (username, password, nickname, email, status, create_time, update_time)
-VALUES ('user1', '$2a$10$NxUn.OEm3zKqYWK.5XRzwuHzPKOYgkRItQJxkzjgHcXsUx80m52/i', '测试用户1', 'user1@example.com', 1, NOW(), NOW());
+VALUES ('user1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '测试用户1', 'user1@example.com', 1, NOW(), NOW());
 
 -- 插入普通用户角色
 INSERT INTO t_user_roles (user_id, role) VALUES (2, 'ROLE_USER');
 
--- 插入测试用户test1（密码：test1）
+-- 插入测试用户test1（密码：123456）
 INSERT INTO t_user (username, password, nickname, email, phone, avatar, status, create_time, update_time)
-VALUES ('test1', '$2a$10$XlqNS4qUqS.Tu8d1ajh.MOS9j2y4jPAftaJLbZ36EATJmrOcrLjMC', '测试用户', 'test1@example.com', '13800138000', 'https://via.placeholder.com/100', 1, NOW(), NOW());
+VALUES ('test1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '测试用户', 'test1@example.com', '13800138000', 'https://via.placeholder.com/100', 1, NOW(), NOW());
 
 -- 插入普通用户角色
 INSERT INTO t_user_roles (user_id, role) VALUES (3, 'ROLE_USER');
