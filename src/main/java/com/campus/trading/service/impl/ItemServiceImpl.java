@@ -306,10 +306,22 @@ public class ItemServiceImpl implements ItemService {
 
     // 辅助方法：将实体转换为DTO
     private ItemDTO convertToDTO(Item item) {
-        // 注意：这里需要根据实际情况完善
-        ItemDTO dto = new ItemDTO();
-        // 设置DTO属性
-        
-        return dto;
+        return ItemDTO.builder()
+                .id(item.getId())
+                .name(item.getName())
+                .categoryId(item.getCategory() != null ? item.getCategory().getId() : null)
+                .categoryName(item.getCategory() != null ? item.getCategory().getName() : null)
+                .price(item.getPrice())
+                .description(item.getDescription())
+                .images(item.getImages())
+                .condition(item.getItemCondition())
+                .status(item.getStatus())
+                .popularity(item.getPopularity())
+                .userId(item.getUser() != null ? item.getUser().getId() : null)
+                .username(item.getUser() != null ? item.getUser().getUsername() : null)
+                .userAvatar(item.getUser() != null ? item.getUser().getAvatar() : null)
+                .createTime(item.getCreateTime())
+                .updateTime(item.getUpdateTime())
+                .build();
     }
 } 
