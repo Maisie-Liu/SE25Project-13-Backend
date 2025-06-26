@@ -90,4 +90,11 @@ public interface UserService {
      * @return 是否存在
      */
     boolean existsByPhone(String phone);
+
+    /**
+     * 获取注册用户总数
+     *
+     * @return 用户总数
+     */
+    long getTotalUsers();
 } 

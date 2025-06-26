@@ -40,7 +40,7 @@ public class SecurityConfig {
             .and()
             .authorizeRequests()
             // 公开接口，不需要认证
-            .antMatchers("/auth/**", "/items/public/**", "/h2-console/**").permitAll()
+            .antMatchers("/auth/**", "/items/public/**", "/items/statistics", "/h2-console/**").permitAll()
             // Swagger UI相关接口
             .antMatchers("/swagger-ui/**", "/swagger-resources/**", "/v3/api-docs/**").permitAll()
             // 其他所有请求需要认证

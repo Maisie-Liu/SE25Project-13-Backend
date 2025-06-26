@@ -200,6 +200,11 @@ public class UserServiceImpl implements UserService {
     public boolean existsByPhone(String phone) {
         return userRepository.existsByPhone(phone);
     }
+
+    @Override
+    public long getTotalUsers() {
+        return userRepository.count();
+    }
     
     // 辅助方法：生成Token
     private String generateToken(User user) {

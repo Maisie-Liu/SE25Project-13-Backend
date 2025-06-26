@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 物品服务接口
@@ -142,4 +143,11 @@ public interface ItemService {
      * @param id 物品ID
      */
     void incrementItemPopularity(Long id);
+
+    /**
+     * 获取平台统计数据
+     *
+     * @return 平台统计数据，包含商品总数、成交订单数和注册用户数
+     */
+    Map<String, Long> getPlatformStatistics();
 } 
