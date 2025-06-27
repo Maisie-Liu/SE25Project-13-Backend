@@ -22,11 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -159,9 +155,9 @@ public class UserServiceImpl implements UserService {
         if (userDTO.getPhone() != null) {
             user.setPhone(userDTO.getPhone());
         }
-        if (userDTO.getAvatarUrl() != null) {
+        if (userDTO.getAvatar() != null) {
             // 假设URL格式为 /api/image/{id}
-            String url = userDTO.getAvatarUrl();
+            String url = userDTO.getAvatar();
             String imageId = url.substring(url.lastIndexOf('/') + 1);
             user.setAvatarImageId(imageId);
         }
