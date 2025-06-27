@@ -100,4 +100,118 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
   SET FOREIGN_KEY_CHECKS=0;
   -- 执行脚本
   SET FOREIGN_KEY_CHECKS=1;
-  ``` 
+  ```
+
+# MongoDB图片存储配置说明
+
+本项目将所有商品图片和用户头像存储于MongoDB数据库，采用GridFS进行大文件管理。
+
+## 1. MongoDB安装
+
+- 推荐使用MongoDB 4.x及以上版本。
+- 可参考官方文档：https://docs.mongodb.com/manual/installation/
+
+## 2. 配置application.yml
+
+在`spring.data.mongodb`下配置MongoDB连接信息，例如：
+
+```yaml
+spring:
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: campus_trading
+      username: <你的用户名，可选>
+      password: <你的密码，可选>
+      authentication-database: admin
+```
+
+## 3. 图片存储说明
+
+- 图片文件通过Spring Data MongoDB的GridFS存储，默认bucket为`images`。
+- 图片上传后返回图片ID，业务实体（如商品、用户）仅保存图片ID。
+- 访问图片时通过接口`/api/image/{id}`获取。
+
+## 4. 依赖与驱动
+
+- Spring Boot Starter Data MongoDB已集成。
+- 需确保`spring-boot-starter-data-mongodb`依赖在`pom.xml`中：
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-mongodb</artifactId>
+</dependency>
+```
+
+## 5. 图片上传与下载接口
+
+- 图片上传接口需鉴权。
+- 图片下载接口需鉴权或防盗链。
+
+## 6. 其他
+
+- 推荐使用MongoDB Compass等可视化工具管理图片文件。
+- 若需更改bucket名，可在`application.yml`中修改`image.bucket`配置。
+
+# MongoDB数据库与图片初始化
+
+## 1. 使用MongoDB Compass创建数据库
+
+1. 打开MongoDB Compass，点击左侧"Create Database"。
+2. Database Name 填写：`campus_trading`
+3. Collection Name 填写：`fs.files`
+4. 点击"Create Database"即可。
+   - GridFS会自动在第一次上传图片时创建`fs.chunks`集合。
+
+## 2. 使用命令行创建数据库
+
+```bash
+# 进入Mongo Shell
+mongosh
+
+# 创建数据库
+use campus_trading
+# 创建GridFS文件集合（可选，首次上传图片时会自动创建）
+db.createCollection('fs.files')
+```
+
+## 3. 上传图片到MongoDB（GridFS）
+
+### 方法一：使用mongofiles命令行工具
+
+```bash
+# 上传图片到GridFS，--db指定数据库，put后跟图片路径
+mongofiles --host localhost --port 27017 --db campus_trading put ./avatar1.jpg --type image/jpeg
+# 上传后会返回ObjectId，记下该ID用于MySQL表的avatar_image_id或image_id字段
+```
+
+### 方法二：使用Spring Boot脚本上传
+
+可编写简单的Spring Boot初始化脚本，示例：
+
+```java
+@Autowired
+private GridFsTemplate gridFsTemplate;
+
+public void uploadInitImages() throws FileNotFoundException {
+    File file = new File("path/to/avatar1.jpg");
+    ObjectId id = gridFsTemplate.store(new FileInputStream(file), "avatar1.jpg", "image/jpeg");
+    System.out.println("avatar1 ObjectId: " + id.toHexString());
+}
+```
+
+### 方法三：使用MongoDB Compass上传
+
+1. 进入`campus_trading`数据库，选择`fs.files`集合。
+2. 点击"Add Data" → "Insert Document"，可手动插入图片元数据（不推荐，建议用命令行或脚本上传二进制图片）。
+
+## 4. 在MySQL中引用图片ID
+
+- 上传图片后，记录返回的ObjectId（如`65e1234567890abcdef12345`）。
+- 在`init.sql`中，用户表的`avatar_image_id`、物品图片表的`image_id`字段填入该ID。
+
+## 5. 访问图片
+
+- 前端或后端通过`/api/image/{id}`接口访问图片。 

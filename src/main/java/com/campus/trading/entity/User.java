@@ -52,10 +52,10 @@ public class User {
     private String phone;
 
     /**
-     * 头像URL
+     * 头像图片ID
      */
     @Column(length = 255)
-    private String avatar;
+    private String avatarImageId;
 
     /**
      * 用户角色
@@ -139,12 +139,12 @@ public class User {
         this.phone = phone;
     }
     
-    public String getAvatar() {
-        return avatar;
+    public String getAvatarImageId() {
+        return avatarImageId;
     }
     
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
+    public void setAvatarImageId(String avatarImageId) {
+        this.avatarImageId = avatarImageId;
     }
     
     public Set<String> getRoles() {
@@ -224,8 +224,8 @@ public class User {
             return this;
         }
         
-        public Builder avatar(String avatar) {
-            user.setAvatar(avatar);
+        public Builder avatarImageId(String avatarImageId) {
+            user.setAvatarImageId(avatarImageId);
             return this;
         }
         

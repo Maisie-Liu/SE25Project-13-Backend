@@ -15,7 +15,7 @@ public class ItemDTO {
     private String categoryName;
     private BigDecimal price;
     private String description;
-    private List<String> images;
+    private List<String> imageUrls;
     private Integer condition;
     private Integer status;
     private Integer popularity;
@@ -28,14 +28,14 @@ public class ItemDTO {
     public ItemDTO() {
     }
     
-    public ItemDTO(Long id, String name, Long categoryId, String categoryName, BigDecimal price, String description, List<String> images, Integer condition, Integer status, Integer popularity, Long userId, String username, String userAvatar, LocalDateTime createTime, LocalDateTime updateTime) {
+    public ItemDTO(Long id, String name, Long categoryId, String categoryName, BigDecimal price, String description, List<String> imageUrls, Integer condition, Integer status, Integer popularity, Long userId, String username, String userAvatar, LocalDateTime createTime, LocalDateTime updateTime) {
         this.id = id;
         this.name = name;
         this.categoryId = categoryId;
         this.categoryName = categoryName;
         this.price = price;
         this.description = description;
-        this.images = images;
+        this.imageUrls = imageUrls;
         this.condition = condition;
         this.status = status;
         this.popularity = popularity;
@@ -94,12 +94,12 @@ public class ItemDTO {
         this.description = description;
     }
     
-    public List<String> getImages() {
-        return images;
+    public List<String> getImageUrls() {
+        return imageUrls;
     }
     
-    public void setImages(List<String> images) {
-        this.images = images;
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls;
     }
     
     public Integer getCondition() {
@@ -203,8 +203,8 @@ public class ItemDTO {
             return this;
         }
         
-        public Builder images(List<String> images) {
-            dto.setImages(images);
+        public Builder imageUrls(List<String> imageUrls) {
+            dto.setImageUrls(imageUrls);
             return this;
         }
         

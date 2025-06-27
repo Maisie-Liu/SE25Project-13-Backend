@@ -89,3 +89,18 @@ logging:
     com.campus.trading: debug
   file:
     name: ./logs/campus-trading.log 
+
+# MongoDB配置
+data:
+  mongodb:
+    host: localhost
+    port: 27017
+    database: campus_trading
+    username: 
+    password: 
+    authentication-database: admin
+
+# 图片存储相关配置
+image:
+  bucket: images
+  url-prefix: /api/image/ 

@@ -13,7 +13,7 @@ public class UserDTO {
     private String nickname;
     private String email;
     private String phone;
-    private String avatar;
+    private String avatarUrl;
     private Set<String> roles;
     private Integer status;
     private LocalDateTime lastLoginTime;
@@ -22,13 +22,13 @@ public class UserDTO {
     public UserDTO() {
     }
     
-    public UserDTO(Long id, String username, String nickname, String email, String phone, String avatar, Set<String> roles, Integer status, LocalDateTime lastLoginTime, LocalDateTime createTime) {
+    public UserDTO(Long id, String username, String nickname, String email, String phone, String avatarUrl, Set<String> roles, Integer status, LocalDateTime lastLoginTime, LocalDateTime createTime) {
         this.id = id;
         this.username = username;
         this.nickname = nickname;
         this.email = email;
         this.phone = phone;
-        this.avatar = avatar;
+        this.avatarUrl = avatarUrl;
         this.roles = roles;
         this.status = status;
         this.lastLoginTime = lastLoginTime;
@@ -75,12 +75,12 @@ public class UserDTO {
         this.phone = phone;
     }
     
-    public String getAvatar() {
-        return avatar;
+    public String getAvatarUrl() {
+        return avatarUrl;
     }
     
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
     
     public Set<String> getRoles() {
@@ -147,8 +147,8 @@ public class UserDTO {
             return this;
         }
         
-        public Builder avatar(String avatar) {
-            dto.setAvatar(avatar);
+        public Builder avatarUrl(String avatarUrl) {
+            dto.setAvatarUrl(avatarUrl);
             return this;
         }
         
