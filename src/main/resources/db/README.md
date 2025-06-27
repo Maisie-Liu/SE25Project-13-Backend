@@ -179,7 +179,7 @@ db.createCollection('fs.files')
 
 ## 3. 上传图片到MongoDB（GridFS）
 
-### 方法一：使用mongofiles命令行工具
+### 方法一：使用mongofiles命令行工具 (下载路径 https://www.mongodb.com/try/download/database-tools)
 
 ```bash
 # 上传图片到GridFS，--db指定数据库，put后跟图片路径
