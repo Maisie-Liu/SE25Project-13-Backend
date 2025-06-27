@@ -91,4 +91,21 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
      */
     @Query("SELECT i FROM Item i WHERE i.name LIKE %:keyword% OR i.description LIKE %:keyword%")
     Page<Item> searchByKeyword(String keyword, Pageable pageable);
+
+    /**
+     * 根据状态和热度排序查询物品列表
+     *
+     * @param status   状态
+     * @param pageable 分页参数
+     * @return 物品分页列表
+     */
+    Page<Item> findByStatusOrderByPopularityDesc(Integer status, Pageable pageable);
+
+    /**
+     * 统计指定状态的商品数量
+     *
+     * @param status 商品状态
+     * @return 商品数量
+     */
+    long countByStatus(Integer status);
 } 

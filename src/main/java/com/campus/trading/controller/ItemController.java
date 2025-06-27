@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 物品控制器
@@ -58,8 +59,9 @@ public class ItemController {
      */
     @GetMapping("/{id}")
     public ApiResponse<ItemDTO> getItemById(@PathVariable Long id) {
+        // 先获取物品详情
         ItemDTO itemDTO = itemService.getItemById(id);
-        // 增加物品热度
+        // 再增加物品热度
         itemService.incrementItemPopularity(id);
         return ApiResponse.success(itemDTO);
     }
@@ -220,5 +222,16 @@ public class ItemController {
             @RequestParam(defaultValue = "10") int pageSize) {
         List<ItemDTO> recommendedItems = itemService.getRecommendedItems(pageNum, pageSize);
         return ApiResponse.success(recommendedItems);
+    }
+
+    /**
+     * 获取平台统计数据
+     *
+     * @return 平台统计数据
+     */
+    @GetMapping("/statistics")
+    public ApiResponse<Map<String, Long>> getPlatformStatistics() {
+        Map<String, Long> statistics = itemService.getPlatformStatistics();
+        return ApiResponse.success(statistics);
     }
 } 

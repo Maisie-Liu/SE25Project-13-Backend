@@ -6,8 +6,11 @@ import com.campus.trading.dto.PageResponseDTO;
 import com.campus.trading.entity.Item;
 import com.campus.trading.entity.User;
 import com.campus.trading.repository.ItemRepository;
+import com.campus.trading.service.CategoryService;
 import com.campus.trading.service.ItemService;
 import com.campus.trading.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.campus.trading.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,7 +26,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -34,12 +39,15 @@ public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
     private final UserService userService;
+    private final CategoryService categoryService;
+    private static final Logger log = LoggerFactory.getLogger(ItemServiceImpl.class);
     private final ImageService imageService;
 
     @Autowired
-    public ItemServiceImpl(ItemRepository itemRepository, UserService userService, ImageService imageService) {
+    public ItemServiceImpl(ItemRepository itemRepository, UserService userService, CategoryService categoryService, ImageService imageService) {
         this.itemRepository = itemRepository;
         this.userService = userService;
+        this.categoryService = categoryService;
         this.imageService = imageService;
     }
 
@@ -51,8 +59,15 @@ public class ItemServiceImpl implements ItemService {
 
         // 创建物品实体
         Item item = new Item();
-        // 设置物品信息
-        // 注意：这里需要根据实际情况完善，如设置分类等
+        item.setName(itemCreateRequest.getName());
+        item.setCategory(categoryService.findById(itemCreateRequest.getCategoryId()));
+        item.setPrice(itemCreateRequest.getPrice());
+        item.setDescription(itemCreateRequest.getDescription());
+//        item.setImages(itemCreateRequest.getImages()); // FIXME 图片上传
+        item.setItemCondition(itemCreateRequest.getCondition());
+        item.setStatus(0); // 默认下架状态
+        item.setPopularity(0); // 初始化热度为0
+        item.setUser(currentUser);
         
         // 保存物品
         Item savedItem = itemRepository.save(item);
@@ -215,18 +230,38 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public PageResponseDTO<ItemDTO> searchItems(String keyword, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, Integer condition, int pageNum, int pageSize, String sort, String order) {
-        // 这里应该使用复杂查询，如Specification或自定义查询
-        // 简单实现，仅使用关键字搜索
-        
         // 创建分页和排序参数
         Sort.Direction direction = "asc".equalsIgnoreCase(order) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Sort sortObj = Sort.by(direction, sort);
-        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, sortObj);
+        Sort sortObj;
         
+        // 根据排序字段创建排序对象
+        switch (sort.toLowerCase()) {
+            case "price":
+                sortObj = Sort.by(direction, "price");
+                break;
+            case "popularity":
+                sortObj = Sort.by(Sort.Direction.DESC, "popularity");
+                break;
+            case "createtime":
+                sortObj = Sort.by(direction, "createTime");
+                break;
+            default:
+                sortObj = Sort.by(Sort.Direction.DESC, "createTime");
+        }
+        
+        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, sortObj);
         Page<Item> itemPage;
+
+        // 如果有关键字，使用关键字搜索
         if (keyword != null && !keyword.isEmpty()) {
             itemPage = itemRepository.searchByKeyword(keyword, pageable);
-        } else {
+        } 
+        // 如果指定了按热度排序，使用专门的查询方法
+        else if ("popularity".equalsIgnoreCase(sort)) {
+            itemPage = itemRepository.findByStatusOrderByPopularityDesc(1, pageable);
+        }
+        // 否则使用普通查询
+        else {
             itemPage = itemRepository.findByStatus(1, pageable);
         }
         
@@ -284,6 +319,28 @@ public class ItemServiceImpl implements ItemService {
         
         // 保存更新
         itemRepository.save(item);
+    }
+
+    @Override
+    public Map<String, Long> getPlatformStatistics() {
+        Map<String, Long> statistics = new HashMap<>();
+        
+        // 获取上架商品总数
+        long totalItems = itemRepository.countByStatus(1);
+        statistics.put("totalItems", totalItems);
+        
+        // 获取成交订单总数（状态为3表示已售出）
+        long completedOrders = itemRepository.countByStatus(3);
+        statistics.put("completedOrders", completedOrders);
+        
+        // 获取注册用户总数
+        long totalUsers = userService.getTotalUsers();
+        statistics.put("totalUsers", totalUsers);
+        
+        // 添加调试日志
+        log.info("Platform statistics: {}", statistics);
+        
+        return statistics;
     }
 
     // 辅助方法：获取物品或抛出异常
