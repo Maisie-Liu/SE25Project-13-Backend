@@ -8,6 +8,7 @@ import com.campus.trading.entity.User;
 import com.campus.trading.repository.UserRepository;
 import com.campus.trading.service.UserService;
 import com.campus.trading.config.JwtUtils;
+import com.campus.trading.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,11 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -38,6 +35,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
+    private final ImageService imageService;
 
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
@@ -46,11 +44,13 @@ public class UserServiceImpl implements UserService {
     public UserServiceImpl(UserRepository userRepository, 
                            PasswordEncoder passwordEncoder,
                            AuthenticationManager authenticationManager,
-                           JwtUtils jwtUtils) {
+                           JwtUtils jwtUtils,
+                           ImageService imageService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
+        this.imageService = imageService;
     }
 
     @Override
@@ -108,7 +108,7 @@ public class UserServiceImpl implements UserService {
                 .userId(user.getId())
                 .username(user.getUsername())
                 .nickname(user.getNickname())
-                .avatar(user.getAvatar())
+                .avatar(user.getAvatarImageId())
                 .roles(user.getRoles())
                 .token(token)
                 .expiresIn(jwtExpiration) // 使用配置的过期时间
@@ -156,7 +156,10 @@ public class UserServiceImpl implements UserService {
             user.setPhone(userDTO.getPhone());
         }
         if (userDTO.getAvatar() != null) {
-            user.setAvatar(userDTO.getAvatar());
+            // 假设URL格式为 /api/image/{id}
+            String url = userDTO.getAvatar();
+            String imageId = url.substring(url.lastIndexOf('/') + 1);
+            user.setAvatarImageId(imageId);
         }
         if (userDTO.getStatus() != null) {
             user.setStatus(userDTO.getStatus());
@@ -226,7 +229,7 @@ public class UserServiceImpl implements UserService {
                 .nickname(user.getNickname())
                 .email(user.getEmail())
                 .phone(user.getPhone())
-                .avatar(user.getAvatar())
+                .avatarUrl(imageService.getImageUrl(user.getAvatarImageId()))
                 .roles(user.getRoles())
                 .status(user.getStatus())
                 .lastLoginTime(user.getLastLoginTime())

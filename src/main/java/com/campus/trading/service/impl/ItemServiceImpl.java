@@ -11,6 +11,7 @@ import com.campus.trading.service.ItemService;
 import com.campus.trading.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.campus.trading.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -40,12 +41,14 @@ public class ItemServiceImpl implements ItemService {
     private final UserService userService;
     private final CategoryService categoryService;
     private static final Logger log = LoggerFactory.getLogger(ItemServiceImpl.class);
+    private final ImageService imageService;
 
     @Autowired
-    public ItemServiceImpl(ItemRepository itemRepository, UserService userService, CategoryService categoryService) {
+    public ItemServiceImpl(ItemRepository itemRepository, UserService userService, CategoryService categoryService, ImageService imageService) {
         this.itemRepository = itemRepository;
         this.userService = userService;
         this.categoryService = categoryService;
+        this.imageService = imageService;
     }
 
     @Override
@@ -60,7 +63,7 @@ public class ItemServiceImpl implements ItemService {
         item.setCategory(categoryService.findById(itemCreateRequest.getCategoryId()));
         item.setPrice(itemCreateRequest.getPrice());
         item.setDescription(itemCreateRequest.getDescription());
-        item.setImages(itemCreateRequest.getImages());
+//        item.setImages(itemCreateRequest.getImages()); // FIXME 图片上传
         item.setItemCondition(itemCreateRequest.getCondition());
         item.setStatus(0); // 默认下架状态
         item.setPopularity(0); // 初始化热度为0
@@ -363,6 +366,9 @@ public class ItemServiceImpl implements ItemService {
 
     // 辅助方法：将实体转换为DTO
     private ItemDTO convertToDTO(Item item) {
+        List<String> imageUrls = item.getImageIds() == null ? null : item.getImageIds().stream()
+            .map(imageService::getImageUrl)
+            .collect(java.util.stream.Collectors.toList());
         return ItemDTO.builder()
                 .id(item.getId())
                 .name(item.getName())
@@ -370,13 +376,13 @@ public class ItemServiceImpl implements ItemService {
                 .categoryName(item.getCategory() != null ? item.getCategory().getName() : null)
                 .price(item.getPrice())
                 .description(item.getDescription())
-                .images(item.getImages())
+                .imageUrls(imageUrls)
                 .condition(item.getItemCondition())
                 .status(item.getStatus())
                 .popularity(item.getPopularity())
                 .userId(item.getUser() != null ? item.getUser().getId() : null)
                 .username(item.getUser() != null ? item.getUser().getUsername() : null)
-                .userAvatar(item.getUser() != null ? item.getUser().getAvatar() : null)
+                .userAvatar(item.getUser() != null ? imageService.getImageUrl(item.getUser().getAvatarImageId()) : null)
                 .createTime(item.getCreateTime())
                 .updateTime(item.getUpdateTime())
                 .build();

@@ -48,12 +48,12 @@ public class Item {
     private String description;
 
     /**
-     * 物品图片列表
+     * 物品图片ID列表（MongoDB）
      */
     @ElementCollection
     @CollectionTable(name = "t_item_images", joinColumns = @JoinColumn(name = "item_id"))
-    @Column(name = "image_url", length = 255)
-    private List<String> images = new ArrayList<>();
+    @Column(name = "image_id", length = 32)
+    private List<String> imageIds = new ArrayList<>();
 
     /**
      * 物品新旧程度：1-10，1表示全新，10表示旧
@@ -135,12 +135,12 @@ public class Item {
         this.description = description;
     }
     
-    public List<String> getImages() {
-        return images;
+    public List<String> getImageIds() {
+        return imageIds;
     }
     
-    public void setImages(List<String> images) {
-        this.images = images;
+    public void setImageIds(List<String> imageIds) {
+        this.imageIds = imageIds;
     }
     
     public Integer getItemCondition() {
@@ -223,8 +223,8 @@ public class Item {
             return this;
         }
         
-        public Builder images(List<String> images) {
-            item.setImages(images);
+        public Builder imageIds(List<String> imageIds) {
+            item.setImageIds(imageIds);
             return this;
         }
         

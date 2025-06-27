@@ -147,8 +147,8 @@ public class UserDTO {
             return this;
         }
         
-        public Builder avatar(String avatar) {
-            dto.setAvatar(avatar);
+        public Builder avatarUrl(String avatarUrl) {
+            dto.setAvatar(avatarUrl);
             return this;
         }
         

@@ -203,8 +203,8 @@ public class ItemDTO {
             return this;
         }
         
-        public Builder images(List<String> images) {
-            dto.setImages(images);
+        public Builder imageUrls(List<String> imageUrls) {
+            dto.setImages(imageUrls);
             return this;
         }
         

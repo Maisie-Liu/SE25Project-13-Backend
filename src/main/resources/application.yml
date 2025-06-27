@@ -7,12 +7,12 @@ spring:
   application:
     name: campus-trading-platform
   
-  # 数据库配置 - 请修改为你自己的数据库配置
+  # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/campus_trading?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
-    password: 你的密码
+    password: lll1110mysql
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -25,12 +25,13 @@ spring:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     show-sql: true
     hibernate:
-      ddl-auto: update  # 首次运行可设为create，之后改为update
+      ddl-auto: update
+    defer-datasource-initialization: true
     properties:
       hibernate:
         format_sql: true
   
-  # Redis配置 - 如果没有Redis可以注释掉或配置为禁用
+  # Redis配置
   redis:
     host: localhost
     port: 6379
@@ -44,7 +45,7 @@ spring:
         max-idle: 8
         min-idle: 0
   
-  # RabbitMQ配置 - 如果没有RabbitMQ可以注释掉或配置为禁用
+  # RabbitMQ配置
   rabbitmq:
     host: localhost
     port: 5672
@@ -56,7 +57,7 @@ spring:
         concurrency: 5
         max-concurrency: 10
   
-  # ElasticSearch配置 - 如果没有ElasticSearch可以注释掉或配置为禁用
+  # ElasticSearch配置
   elasticsearch:
     rest:
       uris: http://localhost:9200
@@ -67,18 +68,28 @@ spring:
       max-file-size: 10MB
       max-request-size: 100MB
 
+  # MongoDB配置
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: campus_trading
+      username: backend
+      password: backend111
+      authentication-database: admin
+
 # JWT配置
 jwt:
-  secret: campus-trading-platform-secret-key  # 生产环境应该使用更复杂的密钥
+  secret: campus-trading-platform-secret-key
   expiration: 86400000 # 24小时
 
 # 自定义配置
 app:
-  # 文件存储路径 - 根据你的环境修改
+  # 文件存储路径
   file:
     upload-dir: ./uploads
   
-  # AI模型配置 - 可选功能
+  # AI模型配置
   ai:
     model-path: ./models/image-description-model
 
@@ -88,19 +99,14 @@ logging:
     root: info
     com.campus.trading: debug
   file:
-    name: ./logs/campus-trading.log 
+    name: ./logs/campus-trading.log
 
-# MongoDB配置
-data:
-  mongodb:
-    host: localhost
-    port: 27017
-    database: campus_trading
-    username: 
-    password: 
-    authentication-database: admin
+sql:
+  init:
+    mode: always
+    data-locations: classpath:db/init.sql
 
 # 图片存储相关配置
 image:
   bucket: images
-  url-prefix: /api/image/ 
+  url-prefix: /api/image/
