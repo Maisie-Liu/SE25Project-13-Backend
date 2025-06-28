@@ -24,4 +24,9 @@ public interface ImageService {
      * 根据图片ID生成图片URL
      */
     String getImageUrl(String imageId);
+
+    /**
+     * 生成有时效性的图片访问令牌
+     */
+    String generateImageAccessToken(String imageId);
 } 

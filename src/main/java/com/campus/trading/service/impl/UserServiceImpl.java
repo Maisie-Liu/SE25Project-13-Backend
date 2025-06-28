@@ -229,7 +229,7 @@ public class UserServiceImpl implements UserService {
                 .nickname(user.getNickname())
                 .email(user.getEmail())
                 .phone(user.getPhone())
-                .avatarUrl(imageService.getImageUrl(user.getAvatarImageId()))
+                .avatarUrl(imageService.generateImageAccessToken(user.getAvatarImageId()))
                 .roles(user.getRoles())
                 .status(user.getStatus())
                 .lastLoginTime(user.getLastLoginTime())
