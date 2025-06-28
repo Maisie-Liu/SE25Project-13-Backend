@@ -367,7 +367,7 @@ public class ItemServiceImpl implements ItemService {
     // 辅助方法：将实体转换为DTO
     private ItemDTO convertToDTO(Item item) {
         List<String> imageUrls = item.getImageIds() == null ? null : item.getImageIds().stream()
-            .map(imageService::getImageUrl)
+            .map(imageService::generateImageAccessToken)
             .collect(java.util.stream.Collectors.toList());
         return ItemDTO.builder()
                 .id(item.getId())
@@ -382,7 +382,7 @@ public class ItemServiceImpl implements ItemService {
                 .popularity(item.getPopularity())
                 .userId(item.getUser() != null ? item.getUser().getId() : null)
                 .username(item.getUser() != null ? item.getUser().getUsername() : null)
-                .userAvatar(item.getUser() != null ? imageService.getImageUrl(item.getUser().getAvatarImageId()) : null)
+                .userAvatar(item.getUser() != null ? imageService.generateImageAccessToken(item.getUser().getAvatarImageId()) : null)
                 .createTime(item.getCreateTime())
                 .updateTime(item.getUpdateTime())
                 .build();

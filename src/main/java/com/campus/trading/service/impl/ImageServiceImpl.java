@@ -1,5 +1,6 @@
 package com.campus.trading.service.impl;
 
+import com.campus.trading.config.JwtUtils;
 import com.campus.trading.dao.ImageDAO;
 import com.campus.trading.service.ImageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,9 @@ public class ImageServiceImpl implements ImageService {
     @Value("${image.url-prefix:/api/image/}")
     private String imageUrlPrefix;
 
+    @Autowired
+    private JwtUtils jwtUtils;
+
     @Override
     public String uploadImage(MultipartFile file) throws IOException {
         return imageDAO.storeImage(file, file.getContentType());
@@ -31,6 +35,12 @@ public class ImageServiceImpl implements ImageService {
     @Override
     public void deleteImage(String imageId) {
         imageDAO.deleteImageById(imageId);
+    }
+
+    @Override
+    public String generateImageAccessToken(String imageId) {
+        String token = jwtUtils.generateImageToken(imageId);
+        return getImageUrl(imageId) + "?token=" + token;
     }
 
     @Override

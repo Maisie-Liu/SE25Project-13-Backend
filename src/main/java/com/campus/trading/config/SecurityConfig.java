@@ -43,6 +43,8 @@ public class SecurityConfig {
             .antMatchers("/auth/**", "/items/public/**", "/items/statistics", "/h2-console/**").permitAll()
             // Swagger UI相关接口
             .antMatchers("/swagger-ui/**", "/swagger-resources/**", "/v3/api-docs/**").permitAll()
+            // 允许匿名访问图片接口
+            .antMatchers("/image/**").permitAll()
             // 其他所有请求需要认证
             .anyRequest().authenticated();
             
