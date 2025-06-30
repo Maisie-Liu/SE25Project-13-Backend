@@ -67,7 +67,7 @@ public class ItemServiceImpl implements ItemService {
         List<String> imageIds = itemCreateRequest.getImages() != null ? new ArrayList<>(itemCreateRequest.getImages()) : new ArrayList<>();
         item.setImageIds(imageIds);
         item.setItemCondition(itemCreateRequest.getCondition());
-        item.setStatus(0); // 默认下架状态
+        item.setStatus(1); // 默认上架状态
         item.setPopularity(0); // 初始化热度为0
         item.setUser(currentUser);
         
