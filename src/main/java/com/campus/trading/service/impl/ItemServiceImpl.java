@@ -63,7 +63,9 @@ public class ItemServiceImpl implements ItemService {
         item.setCategory(categoryService.findById(itemCreateRequest.getCategoryId()));
         item.setPrice(itemCreateRequest.getPrice());
         item.setDescription(itemCreateRequest.getDescription());
-//        item.setImages(itemCreateRequest.getImages()); // FIXME 图片上传
+        // 处理图片ID
+        List<String> imageIds = itemCreateRequest.getImages() != null ? new ArrayList<>(itemCreateRequest.getImages()) : new ArrayList<>();
+        item.setImageIds(imageIds);
         item.setItemCondition(itemCreateRequest.getCondition());
         item.setStatus(1); // 默认上架状态
         item.setPopularity(0); // 初始化热度为0
@@ -81,16 +83,19 @@ public class ItemServiceImpl implements ItemService {
     public ItemDTO updateItem(Long id, ItemCreateRequestDTO itemCreateRequest) {
         // 获取物品
         Item item = getItemOrThrow(id);
-        
         // 检查是否是物品所有者
         checkItemOwner(item);
-        
         // 更新物品信息
-        // 注意：这里需要根据实际情况完善
-        
+        item.setName(itemCreateRequest.getName());
+        item.setCategory(categoryService.findById(itemCreateRequest.getCategoryId()));
+        item.setPrice(itemCreateRequest.getPrice());
+        item.setDescription(itemCreateRequest.getDescription());
+        // 更新图片ID
+        List<String> imageIds = itemCreateRequest.getImages() != null ? new ArrayList<>(itemCreateRequest.getImages()) : new ArrayList<>();
+        item.setImageIds(imageIds);
+        item.setItemCondition(itemCreateRequest.getCondition());
         // 保存更新
         Item updatedItem = itemRepository.save(item);
-        
         // 转换为DTO返回
         return convertToDTO(updatedItem);
     }
@@ -366,7 +371,8 @@ public class ItemServiceImpl implements ItemService {
 
     // 辅助方法：将实体转换为DTO
     private ItemDTO convertToDTO(Item item) {
-        List<String> imageUrls = item.getImageIds() == null ? null : item.getImageIds().stream()
+        List<String> imageIds = item.getImageIds();
+        List<String> imageUrls = imageIds == null ? null : imageIds.stream()
             .map(imageService::generateImageAccessToken)
             .collect(java.util.stream.Collectors.toList());
         return ItemDTO.builder()
@@ -376,7 +382,8 @@ public class ItemServiceImpl implements ItemService {
                 .categoryName(item.getCategory() != null ? item.getCategory().getName() : null)
                 .price(item.getPrice())
                 .description(item.getDescription())
-                .imageUrls(imageUrls)
+                .imageUrls(imageUrls) // DTO的images字段用于URL
+//                .images(imageIds)     // 兼容老前端，返回图片ID列表
                 .condition(item.getItemCondition())
                 .status(item.getStatus())
                 .popularity(item.getPopularity())
