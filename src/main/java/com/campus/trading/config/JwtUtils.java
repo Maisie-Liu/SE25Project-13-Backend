@@ -125,4 +125,15 @@ public class JwtUtils {
         String username = getUsernameFromToken(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
+
+    /**
+     * 生成图片访问Token
+     * @param imageId 图片id
+     * @return 图片Token
+     */
+    public String generateImageToken(String imageId) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("imageId", imageId);
+        return doGenerateToken(claims, imageId);
+    }
 } 
