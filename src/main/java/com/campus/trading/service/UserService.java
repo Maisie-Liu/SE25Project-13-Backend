@@ -97,4 +97,11 @@ public interface UserService {
      * @return 用户总数
      */
     long getTotalUsers();
-} 
+
+    /**
+     * 更新用户头像id
+     *
+     * @param imageId 待更新的图片id
+     * */
+    void updateImageId(String imageId);
+}
