@@ -155,10 +155,8 @@ public class UserServiceImpl implements UserService {
         if (userDTO.getPhone() != null) {
             user.setPhone(userDTO.getPhone());
         }
-        if (userDTO.getAvatar() != null) {
-            // 假设URL格式为 /api/image/{id}
-            String url = userDTO.getAvatar();
-            String imageId = url.substring(url.lastIndexOf('/') + 1);
+        if (userDTO.getAvatarUrl() != null) {
+            String imageId = userDTO.getAvatarUrl();
             user.setAvatarImageId(imageId);
         }
         if (userDTO.getStatus() != null) {
@@ -208,7 +206,14 @@ public class UserServiceImpl implements UserService {
     public long getTotalUsers() {
         return userRepository.count();
     }
-    
+
+    @Override
+    public void updateImageId(String imageId) {
+        User currentUser = findByUsername(getCurrentUser().getUsername());
+        currentUser.setAvatarImageId(imageId);
+        userRepository.save(currentUser);
+    }
+
     // 辅助方法：生成Token
     private String generateToken(User user) {
         // 使用JwtUtils生成令牌

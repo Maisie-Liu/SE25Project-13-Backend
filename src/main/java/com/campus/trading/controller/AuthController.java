@@ -9,6 +9,8 @@ import com.campus.trading.service.UserService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 /**
  * 认证控制器
  */
@@ -115,5 +117,33 @@ public class AuthController {
     public ApiResponse<Boolean> checkPhone(@RequestParam String phone) {
         boolean exists = userService.existsByPhone(phone);
         return ApiResponse.success(exists);
+    }
+
+    /**
+     * 更新当前用户信息
+     * @param userDTO 用户信息
+     * @return 更新后的用户信息
+     */
+    @PutMapping("/profile")
+    public ApiResponse<UserDTO> updateProfile(@RequestBody UserDTO userDTO) {
+        UserDTO updated = userService.updateUser(userDTO);
+        return ApiResponse.success("更新成功", updated);
+    }
+
+    /**
+     * 修改当前用户密码
+     * @param data 包含 oldPassword 和 newPassword
+     * @return 修改结果
+     */
+    @PutMapping("/password")
+    public ApiResponse<Boolean> changePassword(@RequestBody Map<String, String> data) {
+        String oldPassword = data.get("oldPassword");
+        String newPassword = data.get("newPassword");
+        boolean success = userService.updatePassword(oldPassword, newPassword);
+        if (success) {
+            return ApiResponse.success("密码修改成功", true);
+        } else {
+            return ApiResponse.badRequest("原密码错误");
+        }
     }
 } 

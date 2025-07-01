@@ -2,6 +2,7 @@ package com.campus.trading.controller;
 
 import com.campus.trading.service.ImageService;
 import com.campus.trading.config.JwtUtils;
+import com.campus.trading.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -27,6 +28,9 @@ public class ImageController {
     private ImageService imageService;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private JwtUtils jwtUtils;
 
     /**
@@ -36,6 +40,17 @@ public class ImageController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) throws IOException {
         String imageId = imageService.uploadImage(file);
+        return ResponseEntity.ok(imageId);
+    }
+
+    /**
+     * 上传用户头像图片（需鉴权）
+     */
+    @PostMapping("/upload-avatar")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> uploadAvatarImage(@RequestParam("file") MultipartFile file) throws IOException {
+        String imageId = imageService.uploadImage(file);
+        userService.updateImageId(imageId);
         return ResponseEntity.ok(imageId);
     }
 
@@ -60,6 +75,7 @@ public class ImageController {
         }
         InputStream inputStream = imageService.getImageStream(id);
         if (inputStream == null) {
+            log.error("Image not found in GridFS, id={}", id);
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok()
