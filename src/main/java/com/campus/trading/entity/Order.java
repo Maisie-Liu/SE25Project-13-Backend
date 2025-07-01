@@ -1,5 +1,9 @@
 package com.campus.trading.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -11,8 +15,12 @@ import java.time.LocalDateTime;
 /**
  * 订单实体类
  */
+@Data
 @Entity
 @Table(name = "t_order")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Order {
 
@@ -105,129 +113,6 @@ public class Order {
      */
     private LocalDateTime finishTime;
     
-    public Order() {
-    }
-    
-    public Long getId() {
-        return id;
-    }
-    
-    public void setId(Long id) {
-        this.id = id;
-    }
-    
-    public String getOrderNo() {
-        return orderNo;
-    }
-    
-    public void setOrderNo(String orderNo) {
-        this.orderNo = orderNo;
-    }
-    
-    public User getBuyer() {
-        return buyer;
-    }
-    
-    public void setBuyer(User buyer) {
-        this.buyer = buyer;
-    }
-    
-    public User getSeller() {
-        return seller;
-    }
-    
-    public void setSeller(User seller) {
-        this.seller = seller;
-    }
-    
-    public Item getItem() {
-        return item;
-    }
-    
-    public void setItem(Item item) {
-        this.item = item;
-    }
-    
-    public BigDecimal getAmount() {
-        return amount;
-    }
-    
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
-    
-    public Integer getStatus() {
-        return status;
-    }
-    
-    public void setStatus(Integer status) {
-        this.status = status;
-    }
-    
-    public Integer getTradeType() {
-        return tradeType;
-    }
-    
-    public void setTradeType(Integer tradeType) {
-        this.tradeType = tradeType;
-    }
-    
-    public String getTradeLocation() {
-        return tradeLocation;
-    }
-    
-    public void setTradeLocation(String tradeLocation) {
-        this.tradeLocation = tradeLocation;
-    }
-    
-    public LocalDateTime getTradeTime() {
-        return tradeTime;
-    }
-    
-    public void setTradeTime(LocalDateTime tradeTime) {
-        this.tradeTime = tradeTime;
-    }
-    
-    public String getBuyerMessage() {
-        return buyerMessage;
-    }
-    
-    public void setBuyerMessage(String buyerMessage) {
-        this.buyerMessage = buyerMessage;
-    }
-    
-    public String getSellerRemark() {
-        return sellerRemark;
-    }
-    
-    public void setSellerRemark(String sellerRemark) {
-        this.sellerRemark = sellerRemark;
-    }
-    
-    public LocalDateTime getCreateTime() {
-        return createTime;
-    }
-    
-    public void setCreateTime(LocalDateTime createTime) {
-        this.createTime = createTime;
-    }
-    
-    public LocalDateTime getUpdateTime() {
-        return updateTime;
-    }
-    
-    public void setUpdateTime(LocalDateTime updateTime) {
-        this.updateTime = updateTime;
-    }
-    
-    public LocalDateTime getFinishTime() {
-        return finishTime;
-    }
-    
-    public void setFinishTime(LocalDateTime finishTime) {
-        this.finishTime = finishTime;
-    }
-    
     // Helper methods for EscrowServiceImpl
     public Long getBuyerId() {
         return buyer != null ? buyer.getId() : null;
@@ -247,92 +132,5 @@ public class Order {
     
     public BigDecimal getItemPrice() {
         return amount;
-    }
-    
-    public static class Builder {
-        private Order order = new Order();
-        
-        public Builder id(Long id) {
-            order.setId(id);
-            return this;
-        }
-        
-        public Builder orderNo(String orderNo) {
-            order.setOrderNo(orderNo);
-            return this;
-        }
-        
-        public Builder buyer(User buyer) {
-            order.setBuyer(buyer);
-            return this;
-        }
-        
-        public Builder seller(User seller) {
-            order.setSeller(seller);
-            return this;
-        }
-        
-        public Builder item(Item item) {
-            order.setItem(item);
-            return this;
-        }
-        
-        public Builder amount(BigDecimal amount) {
-            order.setAmount(amount);
-            return this;
-        }
-        
-        public Builder status(Integer status) {
-            order.setStatus(status);
-            return this;
-        }
-        
-        public Builder tradeType(Integer tradeType) {
-            order.setTradeType(tradeType);
-            return this;
-        }
-        
-        public Builder tradeLocation(String tradeLocation) {
-            order.setTradeLocation(tradeLocation);
-            return this;
-        }
-        
-        public Builder tradeTime(LocalDateTime tradeTime) {
-            order.setTradeTime(tradeTime);
-            return this;
-        }
-        
-        public Builder buyerMessage(String buyerMessage) {
-            order.setBuyerMessage(buyerMessage);
-            return this;
-        }
-        
-        public Builder sellerRemark(String sellerRemark) {
-            order.setSellerRemark(sellerRemark);
-            return this;
-        }
-        
-        public Builder createTime(LocalDateTime createTime) {
-            order.setCreateTime(createTime);
-            return this;
-        }
-        
-        public Builder updateTime(LocalDateTime updateTime) {
-            order.setUpdateTime(updateTime);
-            return this;
-        }
-        
-        public Builder finishTime(LocalDateTime finishTime) {
-            order.setFinishTime(finishTime);
-            return this;
-        }
-        
-        public Order build() {
-            return order;
-        }
-    }
-    
-    public static Builder builder() {
-        return new Builder();
     }
 } 
