@@ -18,6 +18,13 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 public class TradingApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(TradingApplication.class, args);
+        ApplicationContext ctx = SpringApplication.run(TradingApplication.class, args);
+        String[] beans = ctx.getBeanNamesForType(RequestMappingHandlerMapping.class);
+        System.out.println("===== 所有已注册的接口路径 =====");
+        for (String bean : beans) {
+            RequestMappingHandlerMapping mapping = (RequestMappingHandlerMapping) ctx.getBean(bean);
+            mapping.getHandlerMethods().forEach((k, v) -> System.out.println(k));
+        }
+        System.out.println("===== 接口路径打印结束 =====");
     }
 } 
