@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("")
+@RequestMapping("/comments")
 @CrossOrigin
 public class CommentController {
     private final CommentService commentService;
@@ -19,7 +19,7 @@ public class CommentController {
     }
 
     // 获取某商品下的所有评论（带回复）
-    @GetMapping("/items/{itemId}/comments")
+    @GetMapping("/items/{itemId}")
     public ApiResponse<List<CommentDTO>> getComments(@PathVariable Long itemId) {
         System.out.println("收到评论查询请求，itemId=" + itemId);
         List<CommentDTO> comments = commentService.getCommentsByItemId(itemId);
@@ -27,7 +27,7 @@ public class CommentController {
     }
 
     // 新增评论或回复
-    @PostMapping("/comments")
+    @PostMapping
     public ApiResponse<CommentDTO> addComment(@RequestBody CommentDTO commentDTO, Authentication authentication) {
         String username = authentication.getName();
         CommentDTO saved = commentService.addComment(commentDTO, username);

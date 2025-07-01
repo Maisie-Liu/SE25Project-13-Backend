@@ -13,6 +13,7 @@ import java.math.BigDecimal;
  */
 @RestController
 @RequestMapping("/escrow")
+@CrossOrigin
 public class EscrowController {
 
     private final EscrowService escrowService;
