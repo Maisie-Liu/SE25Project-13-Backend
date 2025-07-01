@@ -18,6 +18,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/items")
+@CrossOrigin
 public class ItemController {
 
     private final ItemService itemService;

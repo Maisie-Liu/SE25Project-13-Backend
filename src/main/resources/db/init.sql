@@ -139,7 +139,7 @@ VALUES ('user1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi',
 INSERT INTO t_user_roles (user_id, role) VALUES (2, 'ROLE_USER');
 
 -- 插入测试用户test1（密码：123456）
-INSERT INTO t_user (username, password, nickname, email, phone,  status, create_time, update_time)
+INSERT INTO t_user (username, password, nickname, email, phone, status, create_time, update_time)
 VALUES ('test1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '测试用户', 'test1@example.com', '13800138000', 1, NOW(), NOW());
 
 -- 插入普通用户角色
