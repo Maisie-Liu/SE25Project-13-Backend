@@ -114,15 +114,20 @@ public class FavoriteController {
      * 检查物品是否已收藏
      *
      * @param itemId 物品ID
-     * @return 是否已收藏
+     * @return 收藏信息，如果未收藏则返回null
      */
     @GetMapping("/check/{itemId}")
-    public ApiResponse<Boolean> checkFavoriteStatus(@PathVariable Long itemId) {
+    public ApiResponse<ItemDTO> checkFavoriteStatus(@PathVariable Long itemId) {
         logger.info("检查物品收藏状态请求: itemId={}", itemId);
         try {
-            boolean isFavorite = favoriteService.checkFavoriteStatus(itemId);
-            logger.info("检查物品收藏状态成功: itemId={}, isFavorite={}", itemId, isFavorite);
-            return ApiResponse.success(isFavorite);
+            ItemDTO favoriteItem = favoriteService.checkFavoriteStatus(itemId);
+            if (favoriteItem != null) {
+                logger.info("检查物品收藏状态成功: itemId={}, isFavorite=true", itemId);
+                return ApiResponse.success("已收藏", favoriteItem);
+            } else {
+                logger.info("检查物品收藏状态成功: itemId={}, isFavorite=false", itemId);
+                return ApiResponse.success("未收藏", null);
+            }
         } catch (Exception e) {
             logger.error("检查物品收藏状态失败: itemId={}", itemId, e);
             return ApiResponse.error(500, "检查收藏状态失败: " + e.getMessage());

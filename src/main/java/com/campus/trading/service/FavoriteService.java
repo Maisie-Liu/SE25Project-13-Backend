@@ -2,6 +2,7 @@ package com.campus.trading.service;
 
 import com.campus.trading.dto.ItemDTO;
 import com.campus.trading.dto.PageResponseDTO;
+import com.campus.trading.entity.Favorite;
 
 /**
  * 收藏服务接口
@@ -40,7 +41,7 @@ public interface FavoriteService {
     /**
      * 检查用户是否已收藏某物品
      * @param itemId 物品ID
-     * @return 是否已收藏
+     * @return 收藏信息，如果未收藏则返回null
      */
-    boolean checkFavoriteStatus(Long itemId);
+    ItemDTO checkFavoriteStatus(Long itemId);
 } 
