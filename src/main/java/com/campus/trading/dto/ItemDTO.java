@@ -24,11 +24,12 @@ public class ItemDTO {
     private String userAvatar;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    private Long favoriteId;
     
     public ItemDTO() {
     }
     
-    public ItemDTO(Long id, String name, Long categoryId, String categoryName, BigDecimal price, String description, List<String> images, Integer condition, Integer status, Integer popularity, Long userId, String username, String userAvatar, LocalDateTime createTime, LocalDateTime updateTime) {
+    public ItemDTO(Long id, String name, Long categoryId, String categoryName, BigDecimal price, String description, List<String> images, Integer condition, Integer status, Integer popularity, Long userId, String username, String userAvatar, LocalDateTime createTime, LocalDateTime updateTime, Long favoriteId) {
         this.id = id;
         this.name = name;
         this.categoryId = categoryId;
@@ -44,6 +45,7 @@ public class ItemDTO {
         this.userAvatar = userAvatar;
         this.createTime = createTime;
         this.updateTime = updateTime;
+        this.favoriteId = favoriteId;
     }
     
     public Long getId() {
@@ -166,6 +168,14 @@ public class ItemDTO {
         this.updateTime = updateTime;
     }
     
+    public Long getFavoriteId() {
+        return favoriteId;
+    }
+    
+    public void setFavoriteId(Long favoriteId) {
+        this.favoriteId = favoriteId;
+    }
+    
     public static Builder builder() {
         return new Builder();
     }
@@ -245,6 +255,11 @@ public class ItemDTO {
         
         public Builder updateTime(LocalDateTime updateTime) {
             dto.setUpdateTime(updateTime);
+            return this;
+        }
+        
+        public Builder favoriteId(Long favoriteId) {
+            dto.setFavoriteId(favoriteId);
             return this;
         }
         

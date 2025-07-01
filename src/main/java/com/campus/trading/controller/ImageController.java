@@ -21,6 +21,7 @@ import java.io.InputStream;
 @Slf4j
 @RestController
 @RequestMapping("/image")
+@CrossOrigin
 public class ImageController {
     @Autowired
     private ImageService imageService;
