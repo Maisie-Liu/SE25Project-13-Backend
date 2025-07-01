@@ -12,7 +12,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/campus_trading?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
-    password: lll1110mysql
+    password: yzx
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -74,8 +74,8 @@ spring:
       host: localhost
       port: 27017
       database: campus_trading
-      username: backend
-      password: backend111
+      username: test
+      password: test
       authentication-database: admin
 
 # JWT配置
@@ -104,7 +104,7 @@ logging:
 sql:
   init:
     mode: always
-    data-locations: classpath:db/init.sql
+    schema-locations: classpath:db/init.sql
 
 # 图片存储相关配置
 image:
