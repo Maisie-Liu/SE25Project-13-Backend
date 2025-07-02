@@ -89,6 +89,18 @@ public class Order {
     private String sellerRemark;
 
     /**
+     * 买家评价（卖家对买家的评价）
+     */
+    @Column(length = 1000)
+    private String buyerComment;
+
+    /**
+     * 卖家评价（买家对卖家的评价）
+     */
+    @Column(length = 1000)
+    private String sellerComment;
+
+    /**
      * 创建时间
      */
     @CreatedDate
@@ -104,6 +116,11 @@ public class Order {
      * 完成时间
      */
     private LocalDateTime finishTime;
+
+    private Integer buyerRating;
+    private Integer sellerRating;
+    
+    private String trackingNumber;
     
     public Order() {
     }
@@ -204,6 +221,22 @@ public class Order {
         this.sellerRemark = sellerRemark;
     }
     
+    public String getBuyerComment() {
+        return buyerComment;
+    }
+    
+    public void setBuyerComment(String buyerComment) {
+        this.buyerComment = buyerComment;
+    }
+    
+    public String getSellerComment() {
+        return sellerComment;
+    }
+    
+    public void setSellerComment(String sellerComment) {
+        this.sellerComment = sellerComment;
+    }
+    
     public LocalDateTime getCreateTime() {
         return createTime;
     }
@@ -226,6 +259,30 @@ public class Order {
     
     public void setFinishTime(LocalDateTime finishTime) {
         this.finishTime = finishTime;
+    }
+    
+    public Integer getBuyerRating() {
+        return buyerRating;
+    }
+    
+    public void setBuyerRating(Integer buyerRating) {
+        this.buyerRating = buyerRating;
+    }
+    
+    public Integer getSellerRating() {
+        return sellerRating;
+    }
+    
+    public void setSellerRating(Integer sellerRating) {
+        this.sellerRating = sellerRating;
+    }
+    
+    public String getTrackingNumber() {
+        return trackingNumber;
+    }
+    
+    public void setTrackingNumber(String trackingNumber) {
+        this.trackingNumber = trackingNumber;
     }
     
     // Helper methods for EscrowServiceImpl
@@ -312,6 +369,16 @@ public class Order {
             return this;
         }
         
+        public Builder buyerComment(String buyerComment) {
+            order.setBuyerComment(buyerComment);
+            return this;
+        }
+        
+        public Builder sellerComment(String sellerComment) {
+            order.setSellerComment(sellerComment);
+            return this;
+        }
+        
         public Builder createTime(LocalDateTime createTime) {
             order.setCreateTime(createTime);
             return this;
@@ -324,6 +391,21 @@ public class Order {
         
         public Builder finishTime(LocalDateTime finishTime) {
             order.setFinishTime(finishTime);
+            return this;
+        }
+        
+        public Builder buyerRating(Integer buyerRating) {
+            order.setBuyerRating(buyerRating);
+            return this;
+        }
+        
+        public Builder sellerRating(Integer sellerRating) {
+            order.setSellerRating(sellerRating);
+            return this;
+        }
+        
+        public Builder trackingNumber(String trackingNumber) {
+            order.setTrackingNumber(trackingNumber);
             return this;
         }
         

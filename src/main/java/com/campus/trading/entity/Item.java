@@ -91,6 +91,12 @@ public class Item {
      */
     @LastModifiedDate
     private LocalDateTime updateTime;
+
+    /**
+     * 库存
+     */
+    @Column(nullable = false)
+    private Integer stock;
     
     public Item() {
     }
@@ -191,6 +197,14 @@ public class Item {
         this.updateTime = updateTime;
     }
     
+    public Integer getStock() {
+        return stock;
+    }
+    
+    public void setStock(Integer stock) {
+        this.stock = stock;
+    }
+    
     public static Builder builder() {
         return new Builder();
     }
@@ -255,6 +269,11 @@ public class Item {
         
         public Builder updateTime(LocalDateTime updateTime) {
             item.setUpdateTime(updateTime);
+            return this;
+        }
+        
+        public Builder stock(Integer stock) {
+            item.setStock(stock);
             return this;
         }
         
