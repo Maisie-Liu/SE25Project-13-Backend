@@ -67,6 +67,16 @@ spring:
       max-file-size: 10MB
       max-request-size: 100MB
 
+  # MongoDB配置
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: campus_trading
+      username:
+      password:
+      authentication-database: admin
+
 # JWT配置
 jwt:
   secret: campus-trading-platform-secret-key  # 生产环境应该使用更复杂的密钥
@@ -88,17 +98,7 @@ logging:
     root: info
     com.campus.trading: debug
   file:
-    name: ./logs/campus-trading.log 
-
-# MongoDB配置
-data:
-  mongodb:
-    host: localhost
-    port: 27017
-    database: campus_trading
-    username: 
-    password: 
-    authentication-database: admin
+    name: ./logs/campus-trading.log
 
 # 图片存储相关配置
 image:

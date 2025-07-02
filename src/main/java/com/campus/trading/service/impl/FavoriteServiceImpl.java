@@ -191,7 +191,7 @@ public class FavoriteServiceImpl implements FavoriteService {
     }
 
     @Override
-    public boolean checkFavoriteStatus(Long itemId) {
+    public ItemDTO checkFavoriteStatus(Long itemId) {
         logger.info("检查物品是否已收藏: itemId={}", itemId);
         try {
             // 获取当前用户
@@ -207,10 +207,20 @@ public class FavoriteServiceImpl implements FavoriteService {
             logger.info("物品信息: id={}, name={}", item.getId(), item.getName());
             
             // 检查是否已收藏
-            boolean isFavorite = favoriteRepository.existsByUserAndItem(currentUser, item);
-            logger.info("检查物品是否已收藏结果: itemId={}, isFavorite={}", itemId, isFavorite);
+            Favorite favorite = favoriteRepository.findByUserAndItem(currentUser, item).orElse(null);
+            if (favorite == null) {
+                logger.info("用户未收藏该物品: userId={}, itemId={}", currentUser.getId(), itemId);
+                return null;
+            }
             
-            return isFavorite;
+            // 转换为DTO返回
+            ItemDTO itemDTO = convertItemToDTO(item);
+            // 设置收藏ID
+            itemDTO.setFavoriteId(favorite.getId());
+            logger.info("用户已收藏该物品: userId={}, itemId={}, favoriteId={}", 
+                    currentUser.getId(), itemId, favorite.getId());
+            
+            return itemDTO;
         } catch (Exception e) {
             logger.error("检查物品是否已收藏失败: itemId={}", itemId, e);
             throw e;
