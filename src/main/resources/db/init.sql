@@ -1,8 +1,8 @@
--- 创建数据库
-CREATE DATABASE IF NOT EXISTS campus_trading CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- -- 创建数据库
+-- CREATE DATABASE IF NOT EXISTS campus_trading CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- 使用数据库
-USE campus_trading;
+-- -- 使用数据库
+-- USE campus_trading;
 
 -- 用户表
 CREATE TABLE IF NOT EXISTS t_user (
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS t_user (
     nickname VARCHAR(50),
     email VARCHAR(100) UNIQUE,
     phone VARCHAR(20),
-    avatar_image_id VARCHAR(255),
+    avatar VARCHAR(255),
     status INT NOT NULL DEFAULT 1,
     last_login_time DATETIME,
     create_time DATETIME,
@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS t_item (
     status INT NOT NULL DEFAULT 1,
     popularity INT NOT NULL DEFAULT 0,
     user_id BIGINT NOT NULL,
+    stock INT NOT NULL DEFAULT 1,
     create_time DATETIME,
     update_time DATETIME,
     FOREIGN KEY (category_id) REFERENCES t_category(id),
@@ -59,8 +60,8 @@ CREATE TABLE IF NOT EXISTS t_item (
 -- 物品图片表
 CREATE TABLE IF NOT EXISTS t_item_images (
     item_id BIGINT NOT NULL,
-    image_id VARCHAR(255) NOT NULL,
-    PRIMARY KEY (item_id, image_id),
+    image_url VARCHAR(255) NOT NULL,
+    PRIMARY KEY (item_id, image_url),
     FOREIGN KEY (item_id) REFERENCES t_item(id) ON DELETE CASCADE
 );
 
@@ -78,9 +79,13 @@ CREATE TABLE IF NOT EXISTS t_order (
     trade_time DATETIME,
     buyer_message VARCHAR(500),
     seller_remark VARCHAR(500),
+    buyer_comment VARCHAR(1000),
+    seller_comment VARCHAR(1000),
     create_time DATETIME,
     update_time DATETIME,
     finish_time DATETIME,
+    buyer_rating INT DEFAULT NULL,
+    seller_rating INT DEFAULT NULL,
     FOREIGN KEY (buyer_id) REFERENCES t_user(id),
     FOREIGN KEY (seller_id) REFERENCES t_user(id),
     FOREIGN KEY (item_id) REFERENCES t_item(id)
@@ -139,8 +144,8 @@ VALUES ('user1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi',
 INSERT INTO t_user_roles (user_id, role) VALUES (2, 'ROLE_USER');
 
 -- 插入测试用户test1（密码：123456）
-INSERT INTO t_user (username, password, nickname, email, phone, status, create_time, update_time)
-VALUES ('test1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '测试用户', 'test1@example.com', '13800138000', 1, NOW(), NOW());
+INSERT INTO t_user (username, password, nickname, email, phone, avatar, status, create_time, update_time)
+VALUES ('test1', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '测试用户', 'test1@example.com', '13800138000', 'https://via.placeholder.com/100', 1, NOW(), NOW());
 
 -- 插入普通用户角色
 INSERT INTO t_user_roles (user_id, role) VALUES (3, 'ROLE_USER');
@@ -204,16 +209,16 @@ VALUES ('Nike运动鞋，43码', 4, 299.00, 'Nike Air Zoom系列，黑色，43�
 INSERT INTO t_item (name, category_id, price, description, item_condition, status, popularity, user_id, create_time, update_time)
 VALUES ('二手自行车，九成新', 5, 399.00, '捷安特牌山地自行车，前后减震，变速系统完好，骑行不到500公里。', 2, 1, 37, 2, NOW(), NOW());
 
-# -- 物品图片
-# INSERT INTO t_item_images (item_id, image_url) VALUES (1, 'https://via.placeholder.com/400x300?text=MacBook+Pro');
-# INSERT INTO t_item_images (item_id, image_url) VALUES (1, 'https://via.placeholder.com/400x300?text=MacBook+Side');
-# INSERT INTO t_item_images (item_id, image_url) VALUES (2, 'https://via.placeholder.com/400x300?text=AirPods+Pro');
-# INSERT INTO t_item_images (item_id, image_url) VALUES (3, 'https://via.placeholder.com/400x300?text=iPhone+13');
-# INSERT INTO t_item_images (item_id, image_url) VALUES (4, 'https://via.placeholder.com/400x300?text=Math+Book');
-# INSERT INTO t_item_images (item_id, image_url) VALUES (5, 'https://via.placeholder.com/400x300?text=Java+Book');
-# INSERT INTO t_item_images (item_id, image_url) VALUES (6, 'https://via.placeholder.com/400x300?text=Desk+Lamp');
-# INSERT INTO t_item_images (item_id, image_url) VALUES (7, 'https://via.placeholder.com/400x300?text=Nike+Shoes');
-# INSERT INTO t_item_images (item_id, image_url) VALUES (8, 'https://via.placeholder.com/400x300?text=Bicycle');
+-- 物品图片
+INSERT INTO t_item_images (item_id, image_url) VALUES (1, 'https://via.placeholder.com/400x300?text=MacBook+Pro');
+INSERT INTO t_item_images (item_id, image_url) VALUES (1, 'https://via.placeholder.com/400x300?text=MacBook+Side');
+INSERT INTO t_item_images (item_id, image_url) VALUES (2, 'https://via.placeholder.com/400x300?text=AirPods+Pro');
+INSERT INTO t_item_images (item_id, image_url) VALUES (3, 'https://via.placeholder.com/400x300?text=iPhone+13');
+INSERT INTO t_item_images (item_id, image_url) VALUES (4, 'https://via.placeholder.com/400x300?text=Math+Book');
+INSERT INTO t_item_images (item_id, image_url) VALUES (5, 'https://via.placeholder.com/400x300?text=Java+Book');
+INSERT INTO t_item_images (item_id, image_url) VALUES (6, 'https://via.placeholder.com/400x300?text=Desk+Lamp');
+INSERT INTO t_item_images (item_id, image_url) VALUES (7, 'https://via.placeholder.com/400x300?text=Nike+Shoes');
+INSERT INTO t_item_images (item_id, image_url) VALUES (8, 'https://via.placeholder.com/400x300?text=Bicycle');
 
 -- 收藏数据
 INSERT INTO t_favorite (user_id, item_id, create_time) VALUES (3, 2, NOW());
