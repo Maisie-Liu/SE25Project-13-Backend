@@ -18,11 +18,12 @@ public class UserDTO {
     private Integer status;
     private LocalDateTime lastLoginTime;
     private LocalDateTime createTime;
+    private String bio;
     
     public UserDTO() {
     }
     
-    public UserDTO(Long id, String username, String nickname, String email, String phone, String avatarUrl, Set<String> roles, Integer status, LocalDateTime lastLoginTime, LocalDateTime createTime) {
+    public UserDTO(Long id, String username, String nickname, String email, String phone, String avatarUrl, Set<String> roles, Integer status, LocalDateTime lastLoginTime, LocalDateTime createTime, String bio) {
         this.id = id;
         this.username = username;
         this.nickname = nickname;
@@ -33,6 +34,7 @@ public class UserDTO {
         this.status = status;
         this.lastLoginTime = lastLoginTime;
         this.createTime = createTime;
+        this.bio = bio;
     }
     
     public Long getId() {
@@ -115,6 +117,14 @@ public class UserDTO {
         this.createTime = createTime;
     }
     
+    public String getBio() {
+        return bio;
+    }
+    
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+    
     public static Builder builder() {
         return new Builder();
     }
@@ -169,6 +179,11 @@ public class UserDTO {
         
         public Builder createTime(LocalDateTime createTime) {
             dto.setCreateTime(createTime);
+            return this;
+        }
+        
+        public Builder bio(String bio) {
+            dto.setBio(bio);
             return this;
         }
         
