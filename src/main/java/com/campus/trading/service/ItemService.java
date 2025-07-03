@@ -150,4 +150,9 @@ public interface ItemService {
      * @return 平台统计数据，包含商品总数、成交订单数和注册用户数
      */
     Map<String, Long> getPlatformStatistics();
+
+    /**
+     * 实体转DTO
+     */
+    ItemDTO convertToDTO(com.campus.trading.entity.Item item);
 } 

@@ -7,6 +7,7 @@ import com.campus.trading.entity.Order;
 import com.campus.trading.entity.User;
 import com.campus.trading.repository.ItemRepository;
 import com.campus.trading.repository.OrderRepository;
+import com.campus.trading.service.ItemService;
 import com.campus.trading.service.OrderService;
 import com.campus.trading.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,12 +33,14 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final ItemRepository itemRepository;
     private final UserService userService;
+    private final ItemService itemService;
 
     @Autowired
-    public OrderServiceImpl(OrderRepository orderRepository, ItemRepository itemRepository, UserService userService) {
+    public OrderServiceImpl(OrderRepository orderRepository, ItemRepository itemRepository, UserService userService, ItemService itemService) {
         this.orderRepository = orderRepository;
         this.itemRepository = itemRepository;
         this.userService = userService;
+        this.itemService = itemService;
     }
 
     @Override
@@ -79,6 +82,15 @@ public class OrderServiceImpl implements OrderService {
         // 更新物品状态
         item.setStatus(2); // 已售出
         itemRepository.save(item);
+        
+        // 下单成功后减少库存
+        if (item != null && item.getStock() != null && item.getStock() > 0) {
+            item.setStock(item.getStock() - 1);
+            if (item.getStock() <= 0) {
+                item.setStatus(0); // 自动下架
+            }
+            itemRepository.save(item);
+        }
         
         // 转换为DTO返回
         return convertToDTO(savedOrder);
@@ -233,18 +245,21 @@ public class OrderServiceImpl implements OrderService {
         // 查询买家订单
         Page<Order> orderPage = orderRepository.findByBuyer(currentUser, pageable);
         
-        // 转换为DTO
+        // 转换为DTO并过滤item为null的订单
         List<OrderDTO> orderDTOs = orderPage.getContent().stream()
+                .filter(order -> order.getItem() != null)
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         
         // 构建分页响应
+        int filteredTotal = orderDTOs.size();
+        int filteredTotalPages = (int) Math.ceil((double) filteredTotal / pageSize);
         return new PageResponseDTO<>(
                 orderDTOs,
-                orderPage.getTotalElements(),
+                filteredTotal,
                 pageNum,
                 pageSize,
-                orderPage.getTotalPages()
+                filteredTotalPages
         );
     }
 
@@ -259,18 +274,21 @@ public class OrderServiceImpl implements OrderService {
         // 查询卖家订单
         Page<Order> orderPage = orderRepository.findBySeller(currentUser, pageable);
         
-        // 转换为DTO
+        // 转换为DTO并过滤item为null的订单
         List<OrderDTO> orderDTOs = orderPage.getContent().stream()
+                .filter(order -> order.getItem() != null)
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         
         // 构建分页响应
+        int filteredTotal = orderDTOs.size();
+        int filteredTotalPages = (int) Math.ceil((double) filteredTotal / pageSize);
         return new PageResponseDTO<>(
                 orderDTOs,
-                orderPage.getTotalElements(),
+                filteredTotal,
                 pageNum,
                 pageSize,
-                orderPage.getTotalPages()
+                filteredTotalPages
         );
     }
 
@@ -291,12 +309,14 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
         
         // 构建分页响应
+        int filteredTotal = orderDTOs.size();
+        int filteredTotalPages = (int) Math.ceil((double) filteredTotal / pageSize);
         return new PageResponseDTO<>(
                 orderDTOs,
-                orderPage.getTotalElements(),
+                filteredTotal,
                 pageNum,
                 pageSize,
-                orderPage.getTotalPages()
+                filteredTotalPages
         );
     }
 
@@ -317,13 +337,99 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
         
         // 构建分页响应
+        int filteredTotal = orderDTOs.size();
+        int filteredTotalPages = (int) Math.ceil((double) filteredTotal / pageSize);
         return new PageResponseDTO<>(
                 orderDTOs,
-                orderPage.getTotalElements(),
+                filteredTotal,
                 pageNum,
                 pageSize,
-                orderPage.getTotalPages()
+                filteredTotalPages
         );
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO deliverOrder(Long id, String trackingNumber) {
+        // 获取订单
+        Order order = getOrderOrThrow(id);
+        // 检查是否是卖家
+        checkOrderSeller(order);
+        // 检查订单状态，必须是已确认（1）
+        if (order.getStatus() != 1) {
+            throw new RuntimeException("订单状态不正确，无法发货");
+        }
+        // 更新订单状态为待收货（2）
+        order.setStatus(2);
+        order.setTrackingNumber(trackingNumber);
+        order.setUpdateTime(LocalDateTime.now());
+        Order updatedOrder = orderRepository.save(order);
+        return convertToDTO(updatedOrder);
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO confirmReceive(Long id) {
+        // 获取订单
+        Order order = getOrderOrThrow(id);
+        // 检查是否是买家
+        checkOrderBuyer(order);
+        // 检查订单状态，必须是待收货（2）
+        if (order.getStatus() != 2) {
+            throw new RuntimeException("订单状态不正确，无法确认收货");
+        }
+        // 更新订单状态为待评价（3）
+        order.setStatus(3);
+        order.setUpdateTime(LocalDateTime.now());
+        Order updatedOrder = orderRepository.save(order);
+        return convertToDTO(updatedOrder);
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO commentOrder(Long id, String comment, boolean isBuyer, Integer rating) {
+        // 获取订单
+        Order order = getOrderOrThrow(id);
+        // 检查订单状态，必须是待评价（3）
+        if (order.getStatus() != 3) {
+            throw new RuntimeException("订单状态不正确，无法评价");
+        }
+        // 判断身份并写入评价
+        User currentUser = getCurrentUser();
+        boolean updated = false;
+        if (isBuyer) {
+            // 买家只能评价卖家
+            if (!order.getBuyer().getId().equals(currentUser.getId())) {
+                throw new RuntimeException("只有买家可以进行此操作");
+            }
+            if (order.getSellerComment() == null) {
+                order.setSellerComment(comment);
+                order.setSellerRating(rating);
+                updated = true;
+            }
+        } else {
+            // 卖家只能评价买家
+            if (!order.getSeller().getId().equals(currentUser.getId())) {
+                throw new RuntimeException("只有卖家可以进行此操作");
+            }
+            if (order.getBuyerComment() == null) {
+                order.setBuyerComment(comment);
+                order.setBuyerRating(rating);
+                updated = true;
+            }
+        }
+        // 如果双方都已评价，则订单状态变为已完成（4）
+        if (order.getBuyerComment() != null && order.getSellerComment() != null) {
+            order.setStatus(4);
+            order.setFinishTime(LocalDateTime.now());
+        }
+        if (updated) {
+            order.setUpdateTime(LocalDateTime.now());
+            Order updatedOrder = orderRepository.save(order);
+            return convertToDTO(updatedOrder);
+        } else {
+            return convertToDTO(order);
+        }
     }
 
     // 辅助方法：获取订单或抛出异常
@@ -371,7 +477,7 @@ public class OrderServiceImpl implements OrderService {
 
     // 辅助方法：将实体转换为DTO
     private OrderDTO convertToDTO(Order order) {
-        return OrderDTO.builder()
+        OrderDTO dto = OrderDTO.builder()
                 .id(order.getId())
                 .orderNo(order.getOrderNo())
                 .buyerId(order.getBuyer().getId())
@@ -392,7 +498,16 @@ public class OrderServiceImpl implements OrderService {
                 .createTime(order.getCreateTime())
                 .updateTime(order.getUpdateTime())
                 .finishTime(order.getFinishTime())
+                .buyerComment(order.getBuyerComment())
+                .sellerComment(order.getSellerComment())
+                .buyerRating(order.getBuyerRating())
+                .sellerRating(order.getSellerRating())
+                .trackingNumber(order.getTrackingNumber())
                 .build();
+        if (order.getItem() != null) {
+            dto.setItem(itemService.convertToDTO(order.getItem()));
+        }
+        return dto;
     }
 
     // 辅助方法：获取状态文本
