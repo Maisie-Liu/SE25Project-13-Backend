@@ -49,17 +49,25 @@ public class ItemCreateRequestDTO {
     @Min(value = 1, message = "物品新旧程度必须在1-10之间")
     @Max(value = 10, message = "物品新旧程度必须在1-10之间")
     private Integer condition;
+
+    /**
+     * 库存
+     */
+    @NotNull(message = "库存不能为空")
+    @Min(value = 1, message = "库存必须大于0")
+    private Integer stock;
     
     public ItemCreateRequestDTO() {
     }
     
-    public ItemCreateRequestDTO(String name, Long categoryId, BigDecimal price, String description, List<String> images, Integer condition) {
+    public ItemCreateRequestDTO(String name, Long categoryId, BigDecimal price, String description, List<String> images, Integer condition, Integer stock) {
         this.name = name;
         this.categoryId = categoryId;
         this.price = price;
         this.description = description;
         this.images = images;
         this.condition = condition;
+        this.stock = stock;
     }
     
     public String getName() {
@@ -108,5 +116,13 @@ public class ItemCreateRequestDTO {
     
     public void setCondition(Integer condition) {
         this.condition = condition;
+    }
+    
+    public Integer getStock() {
+        return stock;
+    }
+    
+    public void setStock(Integer stock) {
+        this.stock = stock;
     }
 } 

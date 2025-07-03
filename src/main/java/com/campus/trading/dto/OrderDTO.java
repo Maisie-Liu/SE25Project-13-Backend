@@ -107,6 +107,16 @@ public class OrderDTO {
      * 完成时间
      */
     private LocalDateTime finishTime;
+
+    private ItemDTO item;
+    
+    private String buyerComment;
+    private String sellerComment;
+    
+    private Integer buyerRating;
+    private Integer sellerRating;
+    
+    private String trackingNumber;
     
     public OrderDTO() {
     }
@@ -294,6 +304,54 @@ public class OrderDTO {
         this.finishTime = finishTime;
     }
     
+    public ItemDTO getItem() {
+        return item;
+    }
+    
+    public void setItem(ItemDTO item) {
+        this.item = item;
+    }
+    
+    public String getBuyerComment() {
+        return buyerComment;
+    }
+    
+    public void setBuyerComment(String buyerComment) {
+        this.buyerComment = buyerComment;
+    }
+    
+    public String getSellerComment() {
+        return sellerComment;
+    }
+    
+    public void setSellerComment(String sellerComment) {
+        this.sellerComment = sellerComment;
+    }
+    
+    public Integer getBuyerRating() {
+        return buyerRating;
+    }
+    
+    public void setBuyerRating(Integer buyerRating) {
+        this.buyerRating = buyerRating;
+    }
+    
+    public Integer getSellerRating() {
+        return sellerRating;
+    }
+    
+    public void setSellerRating(Integer sellerRating) {
+        this.sellerRating = sellerRating;
+    }
+    
+    public String getTrackingNumber() {
+        return trackingNumber;
+    }
+    
+    public void setTrackingNumber(String trackingNumber) {
+        this.trackingNumber = trackingNumber;
+    }
+    
     public static Builder builder() {
         return new Builder();
     }
@@ -398,6 +456,36 @@ public class OrderDTO {
         
         public Builder finishTime(LocalDateTime finishTime) {
             dto.setFinishTime(finishTime);
+            return this;
+        }
+        
+        public Builder item(ItemDTO item) {
+            dto.setItem(item);
+            return this;
+        }
+        
+        public Builder buyerComment(String buyerComment) {
+            dto.setBuyerComment(buyerComment);
+            return this;
+        }
+        
+        public Builder sellerComment(String sellerComment) {
+            dto.setSellerComment(sellerComment);
+            return this;
+        }
+        
+        public Builder buyerRating(Integer buyerRating) {
+            dto.setBuyerRating(buyerRating);
+            return this;
+        }
+        
+        public Builder sellerRating(Integer sellerRating) {
+            dto.setSellerRating(sellerRating);
+            return this;
+        }
+        
+        public Builder trackingNumber(String trackingNumber) {
+            dto.setTrackingNumber(trackingNumber);
             return this;
         }
         

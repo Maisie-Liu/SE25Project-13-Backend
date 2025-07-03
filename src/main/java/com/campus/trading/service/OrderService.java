@@ -106,4 +106,21 @@ public interface OrderService {
      * @return 订单分页列表
      */
     PageResponseDTO<OrderDTO> listSellerOrdersByStatus(Integer status, int pageNum, int pageSize);
+
+    /**
+     * 卖家发货，需填写快递单号
+     */
+    OrderDTO deliverOrder(Long id, String trackingNumber);
+
+    /**
+     * 买家确认收货
+     * @param id 订单ID
+     * @return 确认收货后的订单
+     */
+    OrderDTO confirmReceive(Long id);
+
+    /**
+     * 订单评价
+     */
+    OrderDTO commentOrder(Long id, String comment, boolean isBuyer, Integer rating);
 } 

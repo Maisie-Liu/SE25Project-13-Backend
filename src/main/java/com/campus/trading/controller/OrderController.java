@@ -180,4 +180,39 @@ public class OrderController {
         PageResponseDTO<OrderDTO> pageResponse = orderService.listSellerOrdersByStatus(status, pageNum, pageSize);
         return ApiResponse.success(pageResponse);
     }
+
+    /**
+     * 卖家发货
+     */
+    @PutMapping("/{id}/deliver")
+    public ApiResponse<OrderDTO> deliverOrder(@PathVariable Long id, @RequestParam String trackingNumber) {
+        OrderDTO orderDTO = orderService.deliverOrder(id, trackingNumber);
+        return ApiResponse.success("发货成功", orderDTO);
+    }
+
+    /**
+     * 买家确认收货
+     */
+    @PutMapping("/{id}/receive")
+    public ApiResponse<OrderDTO> confirmReceive(@PathVariable Long id) {
+        OrderDTO orderDTO = orderService.confirmReceive(id);
+        return ApiResponse.success("确认收货成功", orderDTO);
+    }
+
+    /**
+     * 订单评价
+     * @param id 订单ID
+     * @param comment 评价内容
+     * @param isBuyer 是否买家评价
+     * @param rating 评分
+     */
+    @PutMapping("/{id}/comment")
+    public ApiResponse<OrderDTO> commentOrder(
+            @PathVariable Long id,
+            @RequestParam String comment,
+            @RequestParam boolean isBuyer,
+            @RequestParam(required = false) Integer rating) {
+        OrderDTO orderDTO = orderService.commentOrder(id, comment, isBuyer, rating);
+        return ApiResponse.success("评价成功", orderDTO);
+    }
 } 
