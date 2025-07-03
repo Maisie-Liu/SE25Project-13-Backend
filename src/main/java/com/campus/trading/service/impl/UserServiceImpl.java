@@ -143,7 +143,10 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDTO updateUser(UserDTO userDTO) {
-        User user = findById(userDTO.getId());
+        // 获取当前用户
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = findByUsername(username);
         
         // 更新用户信息
         if (userDTO.getNickname() != null) {
@@ -155,10 +158,10 @@ public class UserServiceImpl implements UserService {
         if (userDTO.getPhone() != null) {
             user.setPhone(userDTO.getPhone());
         }
-        if (userDTO.getAvatarUrl() != null) {
-            String imageId = userDTO.getAvatarUrl();
-            user.setAvatarImageId(imageId);
-        }
+//        if (userDTO.getAvatarUrl() != null) {
+//            String imageId = userDTO.getAvatarUrl();
+//            user.setAvatarImageId(imageId);
+//        }
         if (userDTO.getStatus() != null) {
             user.setStatus(userDTO.getStatus());
         }
