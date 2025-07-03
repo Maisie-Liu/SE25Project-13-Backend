@@ -17,7 +17,6 @@ import java.util.List;
 /**
  * 物品实体类
  */
-@Data
 @Entity
 @Table(name = "t_item")
 @Builder
@@ -105,9 +104,6 @@ public class Item {
      */
     @Column(nullable = false)
     private Integer stock;
-    
-    public Item() {
-    }
     
     public Long getId() {
         return id;
@@ -211,82 +207,5 @@ public class Item {
     
     public void setStock(Integer stock) {
         this.stock = stock;
-    }
-    
-    public static Builder builder() {
-        return new Builder();
-    }
-    
-    public static class Builder {
-        private Item item = new Item();
-        
-        public Builder id(Long id) {
-            item.setId(id);
-            return this;
-        }
-        
-        public Builder name(String name) {
-            item.setName(name);
-            return this;
-        }
-        
-        public Builder category(Category category) {
-            item.setCategory(category);
-            return this;
-        }
-        
-        public Builder price(BigDecimal price) {
-            item.setPrice(price);
-            return this;
-        }
-        
-        public Builder description(String description) {
-            item.setDescription(description);
-            return this;
-        }
-        
-        public Builder imageIds(List<String> imageIds) {
-            item.setImageIds(imageIds);
-            return this;
-        }
-        
-        public Builder itemCondition(Integer itemCondition) {
-            item.setItemCondition(itemCondition);
-            return this;
-        }
-        
-        public Builder status(Integer status) {
-            item.setStatus(status);
-            return this;
-        }
-        
-        public Builder popularity(Integer popularity) {
-            item.setPopularity(popularity);
-            return this;
-        }
-        
-        public Builder user(User user) {
-            item.setUser(user);
-            return this;
-        }
-        
-        public Builder createTime(LocalDateTime createTime) {
-            item.setCreateTime(createTime);
-            return this;
-        }
-        
-        public Builder updateTime(LocalDateTime updateTime) {
-            item.setUpdateTime(updateTime);
-            return this;
-        }
-        
-        public Builder stock(Integer stock) {
-            item.setStock(stock);
-            return this;
-        }
-        
-        public Item build() {
-            return item;
-        }
     }
 } 
