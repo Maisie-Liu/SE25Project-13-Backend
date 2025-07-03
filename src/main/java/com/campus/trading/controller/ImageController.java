@@ -83,4 +83,14 @@ public class ImageController {
                 .contentType(MediaType.IMAGE_JPEG)
                 .body(new InputStreamResource(inputStream));
     }
+
+    /**
+     * 删除图片（需鉴权）
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> deleteImage(@PathVariable("id") String id) {
+        imageService.deleteImage(id);
+        return ResponseEntity.ok("图片删除成功");
+    }
 } 
