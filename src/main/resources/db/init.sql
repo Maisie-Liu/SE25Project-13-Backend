@@ -128,6 +128,69 @@ CREATE TABLE IF NOT EXISTS t_favorite (
     FOREIGN KEY (item_id) REFERENCES t_item(id)
 );
 
+-- 评论表
+CREATE TABLE IF NOT EXISTS t_comment (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    content VARCHAR(500) NOT NULL,
+    user_id BIGINT NOT NULL,
+    item_id BIGINT NOT NULL,
+    parent_id BIGINT,
+    reply_user_id BIGINT,
+    status INT NOT NULL DEFAULT 1,
+    create_time DATETIME,
+    update_time DATETIME,
+    FOREIGN KEY (user_id) REFERENCES t_user(id),
+    FOREIGN KEY (item_id) REFERENCES t_item(id)
+);
+
+-- 聊天表
+CREATE TABLE IF NOT EXISTS chats (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user1_id BIGINT NOT NULL,
+    user2_id BIGINT NOT NULL,
+    item_id BIGINT NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    last_message VARCHAR(255),
+    FOREIGN KEY (user1_id) REFERENCES t_user(id),
+    FOREIGN KEY (user2_id) REFERENCES t_user(id),
+    FOREIGN KEY (item_id) REFERENCES t_item(id)
+);
+
+-- 消息表（使用单表继承）
+CREATE TABLE IF NOT EXISTS messages (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    recipient_id BIGINT NOT NULL,
+    sender_id BIGINT NOT NULL,
+    created_at DATETIME NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    message_type VARCHAR(20) NOT NULL,
+    
+    -- ChatMessage 特有字段
+    content VARCHAR(1000),
+    item_id BIGINT,
+    chat_id BIGINT,
+    
+    -- CommentMessage 特有字段
+    comment_id BIGINT,
+    
+    -- FavoriteMessage 特有字段
+    favorite_id BIGINT,
+    
+    -- OrderMessage 特有字段
+    order_id BIGINT,
+    status VARCHAR(50),
+    status_text VARCHAR(255),
+    
+    FOREIGN KEY (recipient_id) REFERENCES t_user(id),
+    FOREIGN KEY (sender_id) REFERENCES t_user(id),
+    FOREIGN KEY (item_id) REFERENCES t_item(id),
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+    FOREIGN KEY (comment_id) REFERENCES t_comment(id) ON DELETE CASCADE,
+    FOREIGN KEY (favorite_id) REFERENCES t_favorite(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES t_order(id) ON DELETE CASCADE
+);
+
 -- 插入初始管理员用户（密码：123456）
 INSERT INTO t_user (username, password, nickname, email, status, create_time, update_time)
 VALUES ('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '系统管理员', 'admin@example.com', 1, NOW(), NOW());
@@ -231,4 +294,75 @@ INSERT INTO t_order (order_no, buyer_id, seller_id, item_id, amount, status, tra
 VALUES (CONCAT('ORD', DATE_FORMAT(NOW(), '%Y%m%d'), '0001'), 3, 2, 4, 45.00, 2, 1, '校图书馆门口', DATE_ADD(NOW(), INTERVAL 2 DAY), '周末下午方便交易', NOW(), NOW());
 
 INSERT INTO t_order (order_no, buyer_id, seller_id, item_id, amount, status, trade_type, trade_location, trade_time, buyer_message, create_time, update_time)
-VALUES (CONCAT('ORD', DATE_FORMAT(NOW(), '%Y%m%d'), '0002'), 2, 3, 7, 299.00, 1, 0, NULL, NULL, '请问鞋子穿着舒适吗？', NOW(), NOW()); 
+VALUES (CONCAT('ORD', DATE_FORMAT(NOW(), '%Y%m%d'), '0002'), 2, 3, 7, 299.00, 1, 0, NULL, NULL, '请问鞋子穿着舒适吗？', NOW(), NOW());
+
+-- 插入聊天测试数据
+INSERT INTO chats (user1_id, user2_id, item_id, created_at, updated_at, last_message)
+VALUES (2, 3, 1, NOW(), NOW(), '您好，这个MacBook还可以便宜点吗？');
+
+INSERT INTO chats (user1_id, user2_id, item_id, created_at, updated_at, last_message)
+VALUES (3, 2, 4, NOW(), NOW(), '这本书是最新版本吗？');
+
+-- 插入聊天消息测试数据
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, content, item_id, chat_id)
+VALUES (3, 2, NOW(), false, 'CHAT', '您好，请问这台MacBook Pro还在出售吗？', 1, 1);
+
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, content, item_id, chat_id)
+VALUES (2, 3, DATE_ADD(NOW(), INTERVAL 5 MINUTE), false, 'CHAT', '是的，还在售，有什么问题吗？', 1, 1);
+
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, content, item_id, chat_id)
+VALUES (3, 2, DATE_ADD(NOW(), INTERVAL 10 MINUTE), false, 'CHAT', '您好，这个MacBook还可以便宜点吗？', 1, 1);
+
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, content, item_id, chat_id)
+VALUES (2, 3, DATE_ADD(NOW(), INTERVAL 2 MINUTE), false, 'CHAT', '这本书是最新版本吗？', 4, 2);
+
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, content, item_id, chat_id)
+VALUES (3, 2, DATE_ADD(NOW(), INTERVAL 7 MINUTE), false, 'CHAT', '是的，是最新版，而且几乎没怎么用过。', 4, 2);
+
+-- 插入评论消息测试数据
+INSERT INTO t_comment (content, user_id, item_id, status, create_time, update_time)
+VALUES ('这个价格合适吗？能再便宜一点吗？', 2, 1, 1, NOW(), NOW());
+
+INSERT INTO t_comment (content, user_id, item_id, parent_id, reply_user_id, status, create_time, update_time)
+VALUES ('价格已经很优惠了，这是市场最低价。', 3, 1, 1, 2, 1, DATE_ADD(NOW(), INTERVAL 30 MINUTE), DATE_ADD(NOW(), INTERVAL 30 MINUTE));
+
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, item_id, comment_id)
+VALUES (3, 2, NOW(), false, 'COMMENT', 1, 1);
+
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, item_id, comment_id)
+VALUES (2, 3, DATE_ADD(NOW(), INTERVAL 30 MINUTE), false, 'COMMENT', 1, 2);
+
+-- 插入收藏消息测试数据（基于现有收藏数据）
+-- 用户3收藏了用户2的物品2 (AirPods Pro)，给用户2发送消息
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, item_id, favorite_id)
+VALUES (2, 3, NOW(), false, 'FAVORITE', 2, 1);
+
+-- 用户2收藏了用户3的物品1 (MacBook Pro)，给用户3发送消息
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, item_id, favorite_id)
+VALUES (3, 2, DATE_ADD(NOW(), INTERVAL 1 HOUR), false, 'FAVORITE', 1, 2);
+
+-- 用户2收藏了用户3的物品3 (iPhone 13)，给用户3发送消息
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, item_id, favorite_id)
+VALUES (3, 2, DATE_ADD(NOW(), INTERVAL 2 HOUR), false, 'FAVORITE', 3, 3);
+
+-- 用户3收藏了用户2的物品4 (高等数学教材)，给用户2发送消息
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, item_id, favorite_id)
+VALUES (2, 3, DATE_ADD(NOW(), INTERVAL 3 HOUR), false, 'FAVORITE', 4, 4);
+
+-- 插入订单消息测试数据（基于现有订单数据）
+-- 订单1：用户3购买用户2的物品4 (高等数学教材)，状态2
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, order_id, status, status_text)
+VALUES (2, 3, NOW(), false, 'ORDER', 1, 'CREATED', '买家已创建订单');
+
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, order_id, status, status_text)
+VALUES (3, 2, DATE_ADD(NOW(), INTERVAL 1 HOUR), false, 'ORDER', 1, 'PAID', '买家已支付');
+
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, order_id, status, status_text)
+VALUES (2, 3, DATE_ADD(NOW(), INTERVAL 2 HOUR), false, 'ORDER', 1, 'SHIPPING', '卖家已发货');
+
+-- 订单2：用户2购买用户3的物品7 (Nike运动鞋)，状态1
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, order_id, status, status_text)
+VALUES (3, 2, DATE_ADD(NOW(), INTERVAL 1 DAY), false, 'ORDER', 2, 'CREATED', '买家已创建订单');
+
+INSERT INTO messages (recipient_id, sender_id, created_at, is_read, message_type, order_id, status, status_text)
+VALUES (2, 3, DATE_ADD(NOW(), INTERVAL 1 DAY), false, 'ORDER', 2, 'PAID', '买家已支付'); 

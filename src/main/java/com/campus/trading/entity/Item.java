@@ -149,6 +149,14 @@ public class Item {
         return imageIds;
     }
     
+    /**
+     * 获取物品图片ID列表的别名方法
+     * @return 图片ID列表
+     */
+    public List<String> getImages() {
+        return imageIds;
+    }
+    
     public void setImageIds(List<String> imageIds) {
         this.imageIds = imageIds;
     }
