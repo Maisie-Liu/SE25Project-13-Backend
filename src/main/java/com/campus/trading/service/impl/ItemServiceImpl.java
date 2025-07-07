@@ -104,6 +104,7 @@ public class ItemServiceImpl implements ItemService {
         List<String> imageIds = itemCreateRequest.getImages() != null ? new ArrayList<>(itemCreateRequest.getImages()) : new ArrayList<>();
         item.setImageIds(imageIds);
         item.setItemCondition(itemCreateRequest.getCondition());
+        item.setStock(itemCreateRequest.getStock());
         // 保存更新
         Item updatedItem = itemRepository.save(item);
         // 转换为DTO返回

@@ -39,7 +39,6 @@ public class ItemCreateRequestDTO {
     /**
      * 物品图片列表
      */
-    @Size(min = 1, message = "至少上传一张物品图片")
     private List<String> images;
 
     /**
