@@ -230,7 +230,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public PageResponseDTO<ItemDTO> searchItems(String keyword, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, Integer conditionMin, Integer conditionMax, int pageNum, int pageSize, String sort, String order) {
-        // 优先用ES搜索
+        // 只有keyword不为空时才用ES，否则直接用数据库
         if (keyword != null && !keyword.isEmpty()) {
             List<ItemDocument> docs = itemESRepository.findByNameContainingOrDescriptionContaining(keyword, keyword);
             // 过滤其它条件
@@ -270,7 +270,7 @@ public class ItemServiceImpl implements ItemService {
             List<ItemDTO> itemDTOs = filtered.subList(from, to).stream().map(this::convertESDocToDTO).collect(Collectors.toList());
             return new PageResponseDTO<>(itemDTOs, total, pageNum, pageSize, (total + pageSize - 1) / pageSize);
         }
-        // 否则回退数据库原有逻辑
+        // keyword为空直接用数据库SQL
         Sort.Direction direction = "asc".equalsIgnoreCase(order) ? Sort.Direction.ASC : Sort.Direction.DESC;
         Sort sortObj;
         switch (sort.toLowerCase()) {
