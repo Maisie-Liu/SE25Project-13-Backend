@@ -85,6 +85,14 @@ public class UserDTO {
         this.avatarUrl = avatarUrl;
     }
     
+    /**
+     * 设置用户头像图片ID的别名方法
+     * @param avatarImageId 头像图片ID
+     */
+    public void setAvatarImageId(String avatarImageId) {
+        this.avatarUrl = avatarImageId;
+    }
+    
     public Set<String> getRoles() {
         return roles;
     }
