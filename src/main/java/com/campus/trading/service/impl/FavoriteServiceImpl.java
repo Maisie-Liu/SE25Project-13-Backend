@@ -10,6 +10,7 @@ import com.campus.trading.repository.FavoriteRepository;
 import com.campus.trading.repository.ItemRepository;
 import com.campus.trading.service.FavoriteService;
 import com.campus.trading.service.MessageService;
+import com.campus.trading.service.ItemService;
 import com.campus.trading.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,14 +34,16 @@ public class FavoriteServiceImpl implements FavoriteService {
     private final ItemRepository itemRepository;
     private final UserService userService;
     private final MessageService messageService;
+    private final ItemService itemService;
 
     @Autowired
     public FavoriteServiceImpl(FavoriteRepository favoriteRepository, ItemRepository itemRepository, 
-                              UserService userService, MessageService messageService) {
+                              UserService userService, MessageService messageService, ItemService itemService) {
         this.favoriteRepository = favoriteRepository;
         this.itemRepository = itemRepository;
         this.userService = userService;
         this.messageService = messageService;
+        this.itemService = itemService;
     }
 
     @Override
@@ -201,7 +204,7 @@ public class FavoriteServiceImpl implements FavoriteService {
             // 转换为DTO
             List<ItemDTO> itemDTOs = favoritesPage.getContent().stream()
                     .map(favorite -> {
-                        ItemDTO dto = convertItemToDTO(favorite.getItem());
+                        ItemDTO dto = itemService.convertToDTO(favorite.getItem());
                         // 设置收藏ID
                         dto.setFavoriteId(favorite.getId());
                         return dto;
