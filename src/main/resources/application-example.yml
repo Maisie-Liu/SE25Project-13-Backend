@@ -92,6 +92,13 @@ app:
   ai:
     model-path: ./models/image-description-model
 
+  # 腾讯云配置
+  tencentcloud:
+    secret-id: 你的SecretId
+    secret-key: 你的SecretKey
+    region: ap-shanghai
+
+
 # 日志配置
 logging:
   level:

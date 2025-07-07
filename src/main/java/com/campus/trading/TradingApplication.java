@@ -7,6 +7,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import com.campus.trading.config.TencentCloudProperties;
 
 /**
  * 校园二手交易平台启动类
@@ -15,6 +17,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @EnableJpaAuditing
 @EnableAsync
 @EnableScheduling
+@EnableConfigurationProperties({TencentCloudProperties.class})
 public class TradingApplication {
 
     public static void main(String[] args) {

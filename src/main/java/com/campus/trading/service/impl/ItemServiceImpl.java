@@ -22,6 +22,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.tencentcloudapi.common.Credential;
+import com.tencentcloudapi.common.exception.TencentCloudSDKException;
+import com.tencentcloudapi.common.profile.ClientProfile;
+import com.tencentcloudapi.common.profile.HttpProfile;
+import com.tencentcloudapi.tiia.v20190529.TiiaClient;
+import com.tencentcloudapi.tiia.v20190529.models.DetectProductRequest;
+import com.tencentcloudapi.tiia.v20190529.models.DetectProductResponse;
+import com.campus.trading.config.TencentCloudProperties;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -42,13 +50,15 @@ public class ItemServiceImpl implements ItemService {
     private final CategoryService categoryService;
     private static final Logger log = LoggerFactory.getLogger(ItemServiceImpl.class);
     private final ImageService imageService;
+    private final TencentCloudProperties tencentCloudProperties;
 
     @Autowired
-    public ItemServiceImpl(ItemRepository itemRepository, UserService userService, CategoryService categoryService, ImageService imageService) {
+    public ItemServiceImpl(ItemRepository itemRepository, UserService userService, CategoryService categoryService, ImageService imageService, TencentCloudProperties tencentCloudProperties) {
         this.itemRepository = itemRepository;
         this.userService = userService;
         this.categoryService = categoryService;
         this.imageService = imageService;
+        this.tencentCloudProperties = tencentCloudProperties;
     }
 
     @Override
@@ -377,5 +387,31 @@ public class ItemServiceImpl implements ItemService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         return userService.findByUsername(username);
+    }
+
+    // 商品识别
+    public String detectProductByImageUrl(String imageUrl) {
+        try {
+            Credential cred = new Credential(
+                tencentCloudProperties.getSecretId(),
+                tencentCloudProperties.getSecretKey()
+            );
+            HttpProfile httpProfile = new HttpProfile();
+            httpProfile.setEndpoint("tiia.tencentcloudapi.com");
+            ClientProfile clientProfile = new ClientProfile();
+            clientProfile.setHttpProfile(httpProfile);
+
+            TiiaClient client = new TiiaClient(cred, tencentCloudProperties.getRegion(), clientProfile);
+
+            DetectProductRequest req = new DetectProductRequest();
+            req.setImageUrl(imageUrl);
+
+            DetectProductResponse resp = client.DetectProduct(req);
+
+            return DetectProductResponse.toJsonString(resp);
+        } catch (TencentCloudSDKException e) {
+            log.error("调用腾讯云商品识别失败", e);
+            throw new RuntimeException("商品识别失败: " + e.getMessage());
+        }
     }
 } 
