@@ -2,12 +2,14 @@ package com.campus.trading.service.impl;
 
 import com.campus.trading.dto.CommentDTO;
 import com.campus.trading.entity.Comment;
+import com.campus.trading.entity.CommentMessage;
 import com.campus.trading.entity.Item;
 import com.campus.trading.entity.User;
 import com.campus.trading.repository.CommentRepository;
 import com.campus.trading.repository.ItemRepository;
 import com.campus.trading.repository.UserRepository;
 import com.campus.trading.service.CommentService;
+import com.campus.trading.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,8 @@ public class CommentServiceImpl implements CommentService {
     private ItemRepository itemRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private MessageService messageService;
 
     @Override
     @Transactional
@@ -39,6 +43,37 @@ public class CommentServiceImpl implements CommentService {
         comment.setReplyUserId(commentDTO.getReplyUserId());
         comment.setStatus(1); // 默认通过
         Comment saved = commentRepository.save(comment);
+        
+        // 创建评论消息通知
+        try {
+            // 确定接收者
+            User recipient = item.getUser(); // 默认是物品所有者
+            
+            // 如果是回复评论，且回复的不是物品所有者
+            if (comment.getParentId() != null && comment.getReplyUserId() != null) {
+                // 如果回复的是其他用户的评论，则通知被回复的用户
+                if (!comment.getReplyUserId().equals(item.getUser().getId())) {
+                    User replyUser = userRepository.findById(comment.getReplyUserId())
+                            .orElse(item.getUser()); // 如果找不到被回复用户，默认通知物品所有者
+                    recipient = replyUser;
+                }
+            }
+            
+            // 不给自己发送通知
+            if (!user.getId().equals(recipient.getId())) {
+                CommentMessage commentMessage = new CommentMessage();
+                commentMessage.setSender(user);
+                commentMessage.setRecipient(recipient);
+                commentMessage.setItem(item);
+                commentMessage.setComment(saved);
+                commentMessage.setRead(false);
+                messageService.saveCommentMessage(commentMessage);
+            }
+        } catch (Exception e) {
+            // 记录错误但不影响主流程
+            System.err.println("创建评论消息失败: " + e.getMessage());
+        }
+        
         return toDTO(saved, user.getUsername(), user.getAvatarImageId(), null);
     }
 
