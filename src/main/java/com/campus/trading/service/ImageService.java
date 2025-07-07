@@ -20,6 +20,8 @@ public interface ImageService {
      */
     void deleteImage(String imageId);
 
+    String generateAIImageAccessToken(String imageId);
+
     /**
      * 根据图片ID生成图片URL
      */

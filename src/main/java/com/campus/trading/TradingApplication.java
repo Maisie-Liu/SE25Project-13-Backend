@@ -1,5 +1,6 @@
 package com.campus.trading;
 
+import com.campus.trading.config.DeepSeekProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
@@ -17,7 +18,7 @@ import com.campus.trading.config.TencentCloudProperties;
 @EnableJpaAuditing
 @EnableAsync
 @EnableScheduling
-@EnableConfigurationProperties({TencentCloudProperties.class})
+@EnableConfigurationProperties({TencentCloudProperties.class, DeepSeekProperties.class})
 public class TradingApplication {
 
     public static void main(String[] args) {

@@ -18,6 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -38,9 +40,13 @@ public class ImageController {
      */
     @PostMapping("/upload")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) throws IOException {
         String imageId = imageService.uploadImage(file);
-        return ResponseEntity.ok(imageId);
+        String url = imageService.generateImageAccessToken(imageId);
+        Map<String, String> result = new HashMap<>();
+        result.put("imageId", imageId);
+        result.put("url", url);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -48,10 +54,14 @@ public class ImageController {
      */
     @PostMapping("/upload-avatar")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<String> uploadAvatarImage(@RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<Map<String, String>> uploadAvatarImage(@RequestParam("file") MultipartFile file) throws IOException {
         String imageId = imageService.uploadImage(file);
         userService.updateImageId(imageId);
-        return ResponseEntity.ok(imageId);
+        String url = imageService.generateImageAccessToken(imageId);
+        Map<String, String> result = new HashMap<>();
+        result.put("imageId", imageId);
+        result.put("url", url);
+        return ResponseEntity.ok(result);
     }
 
     /**

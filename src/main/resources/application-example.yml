@@ -98,6 +98,11 @@ app:
     secret-key: 你的SecretKey
     region: ap-shanghai
 
+  # DeepSeek配置
+  deepseek:
+    api-key: 你的deepseek_api_key
+    base-url: https://api.deepseek.com
+
 
 # 日志配置
 logging:
