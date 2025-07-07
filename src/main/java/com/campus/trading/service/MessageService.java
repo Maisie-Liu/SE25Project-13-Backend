@@ -1,9 +1,7 @@
 package com.campus.trading.service;
 
 import com.campus.trading.dto.*;
-import com.campus.trading.entity.Comment;
-import com.campus.trading.entity.Favorite;
-import com.campus.trading.entity.Order;
+import com.campus.trading.entity.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -44,6 +42,12 @@ public interface MessageService {
     
     // 创建订单消息
     OrderMessageDTO createOrderMessage(Order order, String status, String statusText, String statusDescription);
+    
+    // 保存评论消息
+    CommentMessage saveCommentMessage(CommentMessage commentMessage);
+    
+    // 保存收藏消息
+    FavoriteMessage saveFavoriteMessage(FavoriteMessage favoriteMessage);
     
     // 获取未读消息数量
     long countUnreadMessages(Long userId);

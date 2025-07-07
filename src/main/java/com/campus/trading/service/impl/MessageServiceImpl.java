@@ -315,6 +315,32 @@ public class MessageServiceImpl implements MessageService {
         OrderMessage savedMessage = (OrderMessage) messageRepository.save(message);
         return convertToOrderMessageDTO(savedMessage);
     }
+    
+    @Override
+    @Transactional
+    public CommentMessage saveCommentMessage(CommentMessage commentMessage) {
+        return (CommentMessage) messageRepository.save(commentMessage);
+    }
+    
+    @Override
+    @Transactional
+    public FavoriteMessage saveFavoriteMessage(FavoriteMessage favoriteMessage) {
+        try {
+            System.out.println("MessageServiceImpl.saveFavoriteMessage - 开始保存收藏消息");
+            System.out.println("发送者: " + favoriteMessage.getSender().getUsername());
+            System.out.println("接收者: " + favoriteMessage.getRecipient().getUsername());
+            System.out.println("物品: " + favoriteMessage.getItem().getName());
+            System.out.println("收藏ID: " + favoriteMessage.getFavorite().getId());
+            
+            FavoriteMessage savedMessage = (FavoriteMessage) messageRepository.save(favoriteMessage);
+            System.out.println("MessageServiceImpl.saveFavoriteMessage - 收藏消息保存成功: " + savedMessage.getId());
+            return savedMessage;
+        } catch (Exception e) {
+            System.err.println("MessageServiceImpl.saveFavoriteMessage - 保存收藏消息失败: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
 
     @Override
     public long countUnreadMessages(Long userId) {

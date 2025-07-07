@@ -105,7 +105,11 @@ public class FavoriteController {
             logger.info("根据物品ID取消收藏成功: itemId={}", itemId);
             return ApiResponse.success("取消收藏成功", success);
         } catch (Exception e) {
-            logger.error("根据物品ID取消收藏失败: itemId={}", itemId, e);
+            logger.error("根据物品ID取消收藏失败: itemId={}, 错误信息: {}", itemId, e.getMessage(), e);
+            // 如果是EntityNotFoundException，返回404
+            if (e instanceof javax.persistence.EntityNotFoundException) {
+                return ApiResponse.error(404, "收藏不存在: " + e.getMessage());
+            }
             return ApiResponse.error(500, "取消收藏失败: " + e.getMessage());
         }
     }
