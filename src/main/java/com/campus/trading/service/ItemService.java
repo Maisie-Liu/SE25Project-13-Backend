@@ -97,11 +97,12 @@ public interface ItemService {
     /**
      * 搜索物品
      *
-     * @param keyword      关键字
+     * @param keyword      关键词
      * @param categoryId   分类ID
      * @param minPrice     最低价格
      * @param maxPrice     最高价格
-     * @param condition    新旧程度
+     * @param conditionMin 成色最小值
+     * @param conditionMax 成色最大值
      * @param pageNum      页码
      * @param pageSize     每页大小
      * @param sort         排序方式
@@ -109,7 +110,7 @@ public interface ItemService {
      * @return 物品分页列表
      */
     PageResponseDTO<ItemDTO> searchItems(String keyword, Long categoryId, BigDecimal minPrice, 
-                                        BigDecimal maxPrice, Integer condition, 
+                                        BigDecimal maxPrice, Integer conditionMin, Integer conditionMax, 
                                         int pageNum, int pageSize, String sort, String order);
 
     /**
