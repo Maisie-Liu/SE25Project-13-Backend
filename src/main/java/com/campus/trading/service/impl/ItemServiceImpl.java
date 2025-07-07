@@ -58,18 +58,18 @@ public class ItemServiceImpl implements ItemService {
         User currentUser = getCurrentUser();
 
         // 创建物品实体
-        Item item = new Item();
-        item.setName(itemCreateRequest.getName());
-        item.setCategory(categoryService.findById(itemCreateRequest.getCategoryId()));
-        item.setPrice(itemCreateRequest.getPrice());
-        item.setDescription(itemCreateRequest.getDescription());
-        // 处理图片ID
-        List<String> imageIds = itemCreateRequest.getImages() != null ? new ArrayList<>(itemCreateRequest.getImages()) : new ArrayList<>();
-        item.setImageIds(imageIds);
-        item.setItemCondition(itemCreateRequest.getCondition());
-        item.setStatus(1); // 默认上架状态
-        item.setPopularity(0); // 初始化热度为0
-        item.setUser(currentUser);
+        Item item = Item.builder()
+                .name(itemCreateRequest.getName())
+                .category(categoryService.findById(itemCreateRequest.getCategoryId()))
+                .price(itemCreateRequest.getPrice())
+                .description(itemCreateRequest.getDescription())
+                .imageIds(itemCreateRequest.getImages())
+                .itemCondition(itemCreateRequest.getCondition())
+                .status(1)
+                .popularity(0)
+                .user(currentUser)
+                .stock(itemCreateRequest.getStock())
+                .build();
         
         // 保存物品
         Item savedItem = itemRepository.save(item);
@@ -94,6 +94,7 @@ public class ItemServiceImpl implements ItemService {
         List<String> imageIds = itemCreateRequest.getImages() != null ? new ArrayList<>(itemCreateRequest.getImages()) : new ArrayList<>();
         item.setImageIds(imageIds);
         item.setItemCondition(itemCreateRequest.getCondition());
+        item.setStock(itemCreateRequest.getStock());
         // 保存更新
         Item updatedItem = itemRepository.save(item);
         // 转换为DTO返回
@@ -161,20 +162,11 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public PageResponseDTO<ItemDTO> listItems(int pageNum, int pageSize, String sort, String order) {
-        // 创建分页和排序参数
-        Sort.Direction direction = "asc".equalsIgnoreCase(order) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Sort sortObj = Sort.by(direction, sort);
-        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, sortObj);
-        
-        // 查询上架的物品
-        Page<Item> itemPage = itemRepository.findByStatus(1, pageable);
-        
-        // 转换为DTO
+        Pageable pageable = PageRequest.of(pageNum - 1, pageSize);
+        Page<Item> itemPage = itemRepository.findByStatusAndStockGreaterThan(1, 0, pageable);
         List<ItemDTO> itemDTOs = itemPage.getContent().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
-        
-        // 构建分页响应
         return new PageResponseDTO<>(
                 itemDTOs,
                 itemPage.getTotalElements(),
@@ -212,18 +204,11 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public PageResponseDTO<ItemDTO> listCategoryItems(Long categoryId, int pageNum, int pageSize) {
-        // 创建分页参数
         Pageable pageable = PageRequest.of(pageNum - 1, pageSize);
-        
-        // 查询分类的物品
-        Page<Item> itemPage = itemRepository.findByCategoryId(categoryId, pageable);
-        
-        // 转换为DTO
+        Page<Item> itemPage = itemRepository.findByCategoryIdAndStatusAndStockGreaterThan(categoryId, 1, 0, pageable);
         List<ItemDTO> itemDTOs = itemPage.getContent().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
-        
-        // 构建分页响应
         return new PageResponseDTO<>(
                 itemDTOs,
                 itemPage.getTotalElements(),
@@ -348,6 +333,32 @@ public class ItemServiceImpl implements ItemService {
         return statistics;
     }
 
+    @Override
+    public ItemDTO convertToDTO(Item item) {
+        List<String> imageIds = item.getImageIds();
+        List<String> imageUrls = imageIds == null ? null : imageIds.stream()
+            .map(imageService::generateImageAccessToken)
+            .collect(java.util.stream.Collectors.toList());
+        return ItemDTO.builder()
+                .id(item.getId())
+                .name(item.getName())
+                .categoryId(item.getCategory() != null ? item.getCategory().getId() : null)
+                .categoryName(item.getCategory() != null ? item.getCategory().getName() : null)
+                .price(item.getPrice())
+                .description(item.getDescription())
+                .imageUrls(imageUrls)
+                .condition(item.getItemCondition())
+                .status(item.getStatus())
+                .popularity(item.getPopularity())
+                .userId(item.getUser() != null ? item.getUser().getId() : null)
+                .username(item.getUser() != null ? item.getUser().getUsername() : null)
+                .userAvatar(item.getUser() != null ? imageService.generateImageAccessToken(item.getUser().getAvatarImageId()) : null)
+                .createTime(item.getCreateTime())
+                .updateTime(item.getUpdateTime())
+                .stock(item.getStock())
+                .build();
+    }
+
     // 辅助方法：获取物品或抛出异常
     private Item getItemOrThrow(Long id) {
         return itemRepository.findById(id)
@@ -367,31 +378,5 @@ public class ItemServiceImpl implements ItemService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         return userService.findByUsername(username);
-    }
-
-    // 辅助方法：将实体转换为DTO
-    private ItemDTO convertToDTO(Item item) {
-        List<String> imageIds = item.getImageIds();
-        List<String> imageUrls = imageIds == null ? null : imageIds.stream()
-            .map(imageService::generateImageAccessToken)
-            .collect(java.util.stream.Collectors.toList());
-        return ItemDTO.builder()
-                .id(item.getId())
-                .name(item.getName())
-                .categoryId(item.getCategory() != null ? item.getCategory().getId() : null)
-                .categoryName(item.getCategory() != null ? item.getCategory().getName() : null)
-                .price(item.getPrice())
-                .description(item.getDescription())
-                .imageUrls(imageUrls) // DTO的images字段用于URL
-//                .images(imageIds)     // 兼容老前端，返回图片ID列表
-                .condition(item.getItemCondition())
-                .status(item.getStatus())
-                .popularity(item.getPopularity())
-                .userId(item.getUser() != null ? item.getUser().getId() : null)
-                .username(item.getUser() != null ? item.getUser().getUsername() : null)
-                .userAvatar(item.getUser() != null ? imageService.generateImageAccessToken(item.getUser().getAvatarImageId()) : null)
-                .createTime(item.getCreateTime())
-                .updateTime(item.getUpdateTime())
-                .build();
     }
 } 

@@ -1,5 +1,9 @@
 package com.campus.trading.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -15,6 +19,9 @@ import java.util.List;
  */
 @Entity
 @Table(name = "t_item")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Item {
 
@@ -91,9 +98,12 @@ public class Item {
      */
     @LastModifiedDate
     private LocalDateTime updateTime;
-    
-    public Item() {
-    }
+
+    /**
+     * 库存
+     */
+    @Column(nullable = false)
+    private Integer stock;
     
     public Long getId() {
         return id;
@@ -136,6 +146,14 @@ public class Item {
     }
     
     public List<String> getImageIds() {
+        return imageIds;
+    }
+    
+    /**
+     * 获取物品图片ID列表的别名方法
+     * @return 图片ID列表
+     */
+    public List<String> getImages() {
         return imageIds;
     }
     
@@ -191,75 +209,11 @@ public class Item {
         this.updateTime = updateTime;
     }
     
-    public static Builder builder() {
-        return new Builder();
+    public Integer getStock() {
+        return stock;
     }
     
-    public static class Builder {
-        private Item item = new Item();
-        
-        public Builder id(Long id) {
-            item.setId(id);
-            return this;
-        }
-        
-        public Builder name(String name) {
-            item.setName(name);
-            return this;
-        }
-        
-        public Builder category(Category category) {
-            item.setCategory(category);
-            return this;
-        }
-        
-        public Builder price(BigDecimal price) {
-            item.setPrice(price);
-            return this;
-        }
-        
-        public Builder description(String description) {
-            item.setDescription(description);
-            return this;
-        }
-        
-        public Builder imageIds(List<String> imageIds) {
-            item.setImageIds(imageIds);
-            return this;
-        }
-        
-        public Builder itemCondition(Integer itemCondition) {
-            item.setItemCondition(itemCondition);
-            return this;
-        }
-        
-        public Builder status(Integer status) {
-            item.setStatus(status);
-            return this;
-        }
-        
-        public Builder popularity(Integer popularity) {
-            item.setPopularity(popularity);
-            return this;
-        }
-        
-        public Builder user(User user) {
-            item.setUser(user);
-            return this;
-        }
-        
-        public Builder createTime(LocalDateTime createTime) {
-            item.setCreateTime(createTime);
-            return this;
-        }
-        
-        public Builder updateTime(LocalDateTime updateTime) {
-            item.setUpdateTime(updateTime);
-            return this;
-        }
-        
-        public Item build() {
-            return item;
-        }
+    public void setStock(Integer stock) {
+        this.stock = stock;
     }
 } 

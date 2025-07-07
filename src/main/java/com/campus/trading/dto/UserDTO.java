@@ -13,26 +13,28 @@ public class UserDTO {
     private String nickname;
     private String email;
     private String phone;
-    private String avatar;
+    private String avatarUrl;
     private Set<String> roles;
     private Integer status;
     private LocalDateTime lastLoginTime;
     private LocalDateTime createTime;
+    private String bio;
     
     public UserDTO() {
     }
     
-    public UserDTO(Long id, String username, String nickname, String email, String phone, String avatar, Set<String> roles, Integer status, LocalDateTime lastLoginTime, LocalDateTime createTime) {
+    public UserDTO(Long id, String username, String nickname, String email, String phone, String avatarUrl, Set<String> roles, Integer status, LocalDateTime lastLoginTime, LocalDateTime createTime, String bio) {
         this.id = id;
         this.username = username;
         this.nickname = nickname;
         this.email = email;
         this.phone = phone;
-        this.avatar = avatar;
+        this.avatarUrl = avatarUrl;
         this.roles = roles;
         this.status = status;
         this.lastLoginTime = lastLoginTime;
         this.createTime = createTime;
+        this.bio = bio;
     }
     
     public Long getId() {
@@ -75,12 +77,20 @@ public class UserDTO {
         this.phone = phone;
     }
     
-    public String getAvatar() {
-        return avatar;
+    public String getAvatarUrl() {
+        return avatarUrl;
     }
     
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+    
+    /**
+     * 设置用户头像图片ID的别名方法
+     * @param avatarImageId 头像图片ID
+     */
+    public void setAvatarImageId(String avatarImageId) {
+        this.avatarUrl = avatarImageId;
     }
     
     public Set<String> getRoles() {
@@ -113,6 +123,14 @@ public class UserDTO {
     
     public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
+    }
+    
+    public String getBio() {
+        return bio;
+    }
+    
+    public void setBio(String bio) {
+        this.bio = bio;
     }
     
     public static Builder builder() {
@@ -148,7 +166,7 @@ public class UserDTO {
         }
         
         public Builder avatarUrl(String avatarUrl) {
-            dto.setAvatar(avatarUrl);
+            dto.setAvatarUrl(avatarUrl);
             return this;
         }
         
@@ -169,6 +187,11 @@ public class UserDTO {
         
         public Builder createTime(LocalDateTime createTime) {
             dto.setCreateTime(createTime);
+            return this;
+        }
+        
+        public Builder bio(String bio) {
+            dto.setBio(bio);
             return this;
         }
         

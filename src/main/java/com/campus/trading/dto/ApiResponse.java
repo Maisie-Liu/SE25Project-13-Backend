@@ -31,6 +31,17 @@ public class ApiResponse<T> {
         this.data = data;
     }
     
+    /**
+     * 用于简化布尔响应的构造函数
+     * @param success 是否成功
+     * @param message 响应消息
+     */
+    public ApiResponse(boolean success, String message) {
+        this.code = success ? 200 : 400;
+        this.message = message;
+        this.data = null;
+    }
+    
     public Integer getCode() {
         return code;
     }

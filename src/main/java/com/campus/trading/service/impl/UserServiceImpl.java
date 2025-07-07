@@ -143,7 +143,10 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDTO updateUser(UserDTO userDTO) {
-        User user = findById(userDTO.getId());
+        // 获取当前用户
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = findByUsername(username);
         
         // 更新用户信息
         if (userDTO.getNickname() != null) {
@@ -155,14 +158,11 @@ public class UserServiceImpl implements UserService {
         if (userDTO.getPhone() != null) {
             user.setPhone(userDTO.getPhone());
         }
-        if (userDTO.getAvatar() != null) {
-            // 假设URL格式为 /api/image/{id}
-            String url = userDTO.getAvatar();
-            String imageId = url.substring(url.lastIndexOf('/') + 1);
-            user.setAvatarImageId(imageId);
-        }
         if (userDTO.getStatus() != null) {
             user.setStatus(userDTO.getStatus());
+        }
+        if (userDTO.getBio() != null) {
+            user.setBio(userDTO.getBio());
         }
         
         // 保存更新
@@ -208,7 +208,14 @@ public class UserServiceImpl implements UserService {
     public long getTotalUsers() {
         return userRepository.count();
     }
-    
+
+    @Override
+    public void updateImageId(String imageId) {
+        User currentUser = findByUsername(getCurrentUser().getUsername());
+        currentUser.setAvatarImageId(imageId);
+        userRepository.save(currentUser);
+    }
+
     // 辅助方法：生成Token
     private String generateToken(User user) {
         // 使用JwtUtils生成令牌
@@ -234,6 +241,7 @@ public class UserServiceImpl implements UserService {
                 .status(user.getStatus())
                 .lastLoginTime(user.getLastLoginTime())
                 .createTime(user.getCreateTime())
+                .bio(user.getBio())
                 .build();
     }
 } 

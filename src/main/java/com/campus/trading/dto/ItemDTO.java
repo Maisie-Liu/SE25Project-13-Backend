@@ -25,11 +25,12 @@ public class ItemDTO {
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private Long favoriteId;
+    private Integer stock;
     
     public ItemDTO() {
     }
     
-    public ItemDTO(Long id, String name, Long categoryId, String categoryName, BigDecimal price, String description, List<String> images, Integer condition, Integer status, Integer popularity, Long userId, String username, String userAvatar, LocalDateTime createTime, LocalDateTime updateTime, Long favoriteId) {
+    public ItemDTO(Long id, String name, Long categoryId, String categoryName, BigDecimal price, String description, List<String> images, Integer condition, Integer status, Integer popularity, Long userId, String username, String userAvatar, LocalDateTime createTime, LocalDateTime updateTime, Long favoriteId, Integer stock) {
         this.id = id;
         this.name = name;
         this.categoryId = categoryId;
@@ -46,6 +47,7 @@ public class ItemDTO {
         this.createTime = createTime;
         this.updateTime = updateTime;
         this.favoriteId = favoriteId;
+        this.stock = stock;
     }
     
     public Long getId() {
@@ -176,6 +178,14 @@ public class ItemDTO {
         this.favoriteId = favoriteId;
     }
     
+    public Integer getStock() {
+        return stock;
+    }
+    
+    public void setStock(Integer stock) {
+        this.stock = stock;
+    }
+    
     public static Builder builder() {
         return new Builder();
     }
@@ -260,6 +270,11 @@ public class ItemDTO {
         
         public Builder favoriteId(Long favoriteId) {
             dto.setFavoriteId(favoriteId);
+            return this;
+        }
+        
+        public Builder stock(Integer stock) {
+            dto.setStock(stock);
             return this;
         }
         
