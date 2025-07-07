@@ -164,6 +164,8 @@ public class ItemController {
      * @param minPrice   最低价格
      * @param maxPrice   最高价格
      * @param condition  新旧程度
+     * @param conditionMin 新旧程度最小值
+     * @param conditionMax 新旧程度最大值
      * @param pageNum    页码
      * @param pageSize   每页大小
      * @param sort       排序方式
@@ -177,12 +179,14 @@ public class ItemController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) Integer condition,
+            @RequestParam(required = false) Integer conditionMin,
+            @RequestParam(required = false) Integer conditionMax,
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "createTime") String sort,
             @RequestParam(defaultValue = "desc") String order) {
         PageResponseDTO<ItemDTO> pageResponse = itemService.searchItems(
-                keyword, categoryId, minPrice, maxPrice, condition, pageNum, pageSize, sort, order);
+                keyword, categoryId, minPrice, maxPrice, condition, conditionMin, conditionMax, pageNum, pageSize, sort, order);
         return ApiResponse.success(pageResponse);
     }
 
