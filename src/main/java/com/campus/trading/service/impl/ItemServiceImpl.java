@@ -229,11 +229,11 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public PageResponseDTO<ItemDTO> searchItems(String keyword, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, Integer condition, Integer conditionMin, Integer conditionMax, int pageNum, int pageSize, String sort, String order) {
+    public PageResponseDTO<ItemDTO> searchItems(String keyword, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, Integer conditionMin, Integer conditionMax, int pageNum, int pageSize, String sort, String order) {
         // 优先用ES搜索
         if (keyword != null && !keyword.isEmpty()) {
             List<ItemDocument> docs = itemESRepository.findByNameContainingOrDescriptionContaining(keyword, keyword);
-            // 过滤其他条件
+            // 过滤其它条件
             List<ItemDocument> filtered = docs.stream()
                 .filter(doc -> (categoryId == null || (doc.getCategoryId() != null && doc.getCategoryId().equals(categoryId)))
                     && (minPrice == null || (doc.getPrice() != null && doc.getPrice().compareTo(minPrice) >= 0))

@@ -178,15 +178,46 @@ public class ItemController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
-            @RequestParam(required = false) Integer condition,
+            @RequestParam(required = false) String condition,
             @RequestParam(required = false) Integer conditionMin,
             @RequestParam(required = false) Integer conditionMax,
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "createTime") String sort,
             @RequestParam(defaultValue = "desc") String order) {
+        // 兼容前端传condition为字符串的情况
+        if (condition != null) {
+            switch (condition.toLowerCase()) {
+                case "all":
+                    conditionMin = null;
+                    conditionMax = null;
+                    break;
+                case "new":
+                    conditionMin = 1;
+                    conditionMax = 1;
+                    break;
+                case "like_new":
+                    conditionMin = 2;
+                    conditionMax = 3;
+                    break;
+                case "good":
+                    conditionMin = 4;
+                    conditionMax = 6;
+                    break;
+                case "acceptable":
+                    conditionMin = 7;
+                    conditionMax = 10;
+                    break;
+                default:
+                    try {
+                        int cond = Integer.parseInt(condition);
+                        conditionMin = cond;
+                        conditionMax = cond;
+                    } catch (NumberFormatException ignored) {}
+            }
+        }
         PageResponseDTO<ItemDTO> pageResponse = itemService.searchItems(
-                keyword, categoryId, minPrice, maxPrice, condition, conditionMin, conditionMax, pageNum, pageSize, sort, order);
+                keyword, categoryId, minPrice, maxPrice, conditionMin, conditionMax, pageNum, pageSize, sort, order);
         return ApiResponse.success(pageResponse);
     }
 
