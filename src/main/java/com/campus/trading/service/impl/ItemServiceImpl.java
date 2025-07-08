@@ -426,13 +426,13 @@ public class ItemServiceImpl implements ItemService {
                 .categoryName(doc.getCategoryName())
                 .price(doc.getPrice())
                 .description(doc.getDescription())
-                .imageUrls(doc.getImageIds())
+                .imageUrls(doc.getImageIds() == null ? null : doc.getImageIds().stream().map(imageService::generateImageAccessToken).collect(Collectors.toList()))
                 .condition(doc.getItemCondition())
                 .status(doc.getStatus())
                 .popularity(doc.getPopularity())
                 .userId(doc.getUserId())
                 .username(doc.getUsername())
-                .userAvatar(doc.getUserAvatar())
+                .userAvatar(doc.getUserAvatar() != null ? imageService.generateImageAccessToken(doc.getUserAvatar()) : null)
                 .createTime(doc.getCreateTime())
                 .updateTime(doc.getUpdateTime())
                 .stock(doc.getStock())
@@ -485,7 +485,7 @@ public class ItemServiceImpl implements ItemService {
             doc.setPopularity(item.getPopularity());
             doc.setUserId(item.getUser() != null ? item.getUser().getId() : null);
             doc.setUsername(item.getUser() != null ? item.getUser().getUsername() : null);
-            doc.setUserAvatar(null); // 如有头像可补充
+            doc.setUserAvatar(item.getUser() != null ? item.getUser().getAvatarImageId() : null);
             doc.setCreateTime(item.getCreateTime());
             doc.setUpdateTime(item.getUpdateTime());
             doc.setStock(item.getStock());
