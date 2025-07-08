@@ -99,6 +99,12 @@ public class User {
      */
     @LastModifiedDate
     private LocalDateTime updateTime;
+
+    /**
+     * 个人简介
+     */
+    @Column(length = 255)
+    private String bio;
     
     public User() {
     }
@@ -215,6 +221,14 @@ public class User {
         this.updateTime = updateTime;
     }
     
+    public String getBio() {
+        return bio;
+    }
+    
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+    
     public static Builder builder() {
         return new Builder();
     }
@@ -289,6 +303,11 @@ public class User {
         
         public Builder updateTime(LocalDateTime updateTime) {
             user.setUpdateTime(updateTime);
+            return this;
+        }
+        
+        public Builder bio(String bio) {
+            user.setBio(bio);
             return this;
         }
         

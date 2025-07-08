@@ -3,11 +3,14 @@ package com.campus.trading.service.impl;
 import com.campus.trading.dto.ItemDTO;
 import com.campus.trading.dto.PageResponseDTO;
 import com.campus.trading.entity.Favorite;
+import com.campus.trading.entity.FavoriteMessage;
 import com.campus.trading.entity.Item;
 import com.campus.trading.entity.User;
 import com.campus.trading.repository.FavoriteRepository;
 import com.campus.trading.repository.ItemRepository;
 import com.campus.trading.service.FavoriteService;
+import com.campus.trading.service.MessageService;
+import com.campus.trading.service.ItemService;
 import com.campus.trading.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,12 +33,17 @@ public class FavoriteServiceImpl implements FavoriteService {
     private final FavoriteRepository favoriteRepository;
     private final ItemRepository itemRepository;
     private final UserService userService;
+    private final MessageService messageService;
+    private final ItemService itemService;
 
     @Autowired
-    public FavoriteServiceImpl(FavoriteRepository favoriteRepository, ItemRepository itemRepository, UserService userService) {
+    public FavoriteServiceImpl(FavoriteRepository favoriteRepository, ItemRepository itemRepository, 
+                              UserService userService, MessageService messageService, ItemService itemService) {
         this.favoriteRepository = favoriteRepository;
         this.itemRepository = itemRepository;
         this.userService = userService;
+        this.messageService = messageService;
+        this.itemService = itemService;
     }
 
     @Override
@@ -67,11 +75,36 @@ public class FavoriteServiceImpl implements FavoriteService {
                     .item(item)
                     .build();
             
-            favoriteRepository.save(favorite);
-            logger.info("收藏成功: favoriteId={}", favorite.getId());
+            Favorite savedFavorite = favoriteRepository.save(favorite);
+            logger.info("收藏成功: favoriteId={}", savedFavorite.getId());
+            
+            // 创建收藏消息通知
+            if (!currentUser.getId().equals(item.getUser().getId())) {
+                try {
+                    logger.info("开始创建收藏消息: 发送者={}, 接收者={}", currentUser.getUsername(), item.getUser().getUsername());
+                    
+                    FavoriteMessage favoriteMessage = new FavoriteMessage();
+                    favoriteMessage.setSender(currentUser);
+                    favoriteMessage.setRecipient(item.getUser());
+                    favoriteMessage.setItem(item);
+                    favoriteMessage.setFavorite(savedFavorite);
+                    favoriteMessage.setRead(false);
+                    
+                    FavoriteMessage savedMessage = messageService.saveFavoriteMessage(favoriteMessage);
+                    logger.info("收藏消息创建成功: messageId={}, senderId={}, recipientId={}, itemId={}",
+                            savedMessage.getId(), currentUser.getId(), item.getUser().getId(), item.getId());
+                } catch (Exception e) {
+                    logger.error("创建收藏消息失败: {}", e.getMessage(), e);
+                    // 不影响主流程，继续执行
+                }
+            } else {
+                logger.info("用户收藏了自己的物品，不创建消息通知");
+            }
             
             // 转换为DTO返回
-            return convertItemToDTO(item);
+            ItemDTO itemDTO = convertItemToDTO(item);
+            itemDTO.setFavoriteId(savedFavorite.getId());
+            return itemDTO;
         } catch (Exception e) {
             logger.error("添加收藏失败: itemId={}", itemId, e);
             throw e;
@@ -132,19 +165,23 @@ public class FavoriteServiceImpl implements FavoriteService {
             
             // 获取收藏
             Favorite favorite = favoriteRepository.findByUserAndItem(currentUser, item)
-                    .orElseThrow(() -> {
-                        logger.error("收藏不存在: userId={}, itemId={}", currentUser.getId(), itemId);
-                        return new EntityNotFoundException("收藏不存在");
-                    });
+                    .orElse(null);
+            
+            if (favorite == null) {
+                logger.warn("收藏不存在: userId={}, itemId={}", currentUser.getId(), itemId);
+                // 不抛出异常，直接返回成功
+                return true;
+            }
+            
             logger.info("收藏信息: id={}", favorite.getId());
             
             // 删除收藏
             favoriteRepository.delete(favorite);
-            logger.info("根据物品ID取消收藏成功: itemId={}", itemId);
+            logger.info("根据物品ID取消收藏成功: itemId={}, favoriteId={}", itemId, favorite.getId());
             
             return true;
         } catch (Exception e) {
-            logger.error("根据物品ID取消收藏失败: itemId={}", itemId, e);
+            logger.error("根据物品ID取消收藏失败: itemId={}, 错误信息: {}", itemId, e.getMessage(), e);
             throw e;
         }
     }
@@ -167,7 +204,7 @@ public class FavoriteServiceImpl implements FavoriteService {
             // 转换为DTO
             List<ItemDTO> itemDTOs = favoritesPage.getContent().stream()
                     .map(favorite -> {
-                        ItemDTO dto = convertItemToDTO(favorite.getItem());
+                        ItemDTO dto = itemService.convertToDTO(favorite.getItem());
                         // 设置收藏ID
                         dto.setFavoriteId(favorite.getId());
                         return dto;

@@ -161,12 +161,11 @@ public class UserServiceImpl implements UserService {
         if (userDTO.getPhone() != null) {
             user.setPhone(userDTO.getPhone());
         }
-//        if (userDTO.getAvatarUrl() != null) {
-//            String imageId = userDTO.getAvatarUrl();
-//            user.setAvatarImageId(imageId);
-//        }
         if (userDTO.getStatus() != null) {
             user.setStatus(userDTO.getStatus());
+        }
+        if (userDTO.getBio() != null) {
+            user.setBio(userDTO.getBio());
         }
         
         // 保存更新
@@ -297,6 +296,7 @@ public class UserServiceImpl implements UserService {
                 .location(user.getLocation())
                 .lastLoginTime(user.getLastLoginTime())
                 .createTime(user.getCreateTime())
+                .bio(user.getBio())
                 .build();
     }
 } 
