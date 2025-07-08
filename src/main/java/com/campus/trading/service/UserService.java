@@ -104,4 +104,11 @@ public interface UserService {
      * @param imageId 待更新的图片id
      * */
     void updateImageId(String imageId);
+
+    /**
+     * 通过Principal获取当前用户实体
+     * @param principal Spring Security Principal
+     * @return 用户对象
+     */
+    User getCurrentUser(java.security.Principal principal);
 }

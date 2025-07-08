@@ -494,4 +494,9 @@ public class ItemServiceImpl implements ItemService {
         itemESRepository.saveAll(docs);
         System.out.println("已同步商品数据到ElasticSearch，数量：" + docs.size());
     }
+
+    @Override
+    public Item getItemEntityById(Long id) {
+        return itemRepository.findById(id).orElseThrow(() -> new RuntimeException("物品不存在: ID=" + id));
+    }
 } 

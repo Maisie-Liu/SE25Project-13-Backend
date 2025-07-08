@@ -3,6 +3,7 @@ package com.campus.trading.service;
 import com.campus.trading.dto.ItemCreateRequestDTO;
 import com.campus.trading.dto.ItemDTO;
 import com.campus.trading.dto.PageResponseDTO;
+import com.campus.trading.entity.Item;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
@@ -156,4 +157,11 @@ public interface ItemService {
      * 实体转DTO
      */
     ItemDTO convertToDTO(com.campus.trading.entity.Item item);
+
+    /**
+     * 获取物品实体
+     * @param id 物品ID
+     * @return 物品实体
+     */
+    Item getItemEntityById(Long id);
 } 

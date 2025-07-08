@@ -117,15 +117,23 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO getCurrentUser() {
-        // 从安全上下文获取当前用户
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new UsernameNotFoundException("当前用户未登录");
         }
-        
-        String username = authentication.getName();
-        User user = findByUsername(username);
-        return convertToDTO(user);
+        return convertToDTO(getCurrentUser(authentication.getName()));
+    }
+
+    @Override
+    public User getCurrentUser(java.security.Principal principal) {
+        if (principal == null) {
+            throw new RuntimeException("未登录");
+        }
+        return getCurrentUser(principal.getName());
+    }
+
+    private User getCurrentUser(String username) {
+        return findByUsername(username);
     }
 
     @Override
