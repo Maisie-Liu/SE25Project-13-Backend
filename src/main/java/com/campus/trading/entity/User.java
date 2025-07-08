@@ -75,6 +75,18 @@ public class User {
      * 最后登录时间
      */
     private LocalDateTime lastLoginTime;
+    
+    /**
+     * 个人简介
+     */
+    @Column(length = 500)
+    private String bio;
+    
+    /**
+     * 所在地
+     */
+    @Column(length = 100)
+    private String location;
 
     /**
      * 创建时间
@@ -171,6 +183,22 @@ public class User {
         this.lastLoginTime = lastLoginTime;
     }
     
+    public String getBio() {
+        return bio;
+    }
+    
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+    
+    public String getLocation() {
+        return location;
+    }
+    
+    public void setLocation(String location) {
+        this.location = location;
+    }
+    
     public LocalDateTime getCreateTime() {
         return createTime;
     }
@@ -241,6 +269,16 @@ public class User {
         
         public Builder lastLoginTime(LocalDateTime lastLoginTime) {
             user.setLastLoginTime(lastLoginTime);
+            return this;
+        }
+        
+        public Builder bio(String bio) {
+            user.setBio(bio);
+            return this;
+        }
+        
+        public Builder location(String location) {
+            user.setLocation(location);
             return this;
         }
         

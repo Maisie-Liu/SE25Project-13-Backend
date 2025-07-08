@@ -378,4 +378,18 @@ public class ItemServiceImpl implements ItemService {
         String username = authentication.getName();
         return userService.findByUsername(username);
     }
+    
+    @Override
+    public List<Object> getItemsByUserId(Long userId) {
+        // 获取用户
+        User user = userService.findById(userId);
+        
+        // 查询用户的物品（按创建时间倒序）
+        List<Item> items = itemRepository.findByUserOrderByCreateTimeDesc(user);
+        
+        // 转换为DTO并添加到结果列表
+        return items.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
 } 

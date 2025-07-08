@@ -155,4 +155,12 @@ public interface ItemService {
      * 实体转DTO
      */
     ItemDTO convertToDTO(com.campus.trading.entity.Item item);
+    
+    /**
+     * 获取用户所有物品
+     *
+     * @param userId 用户ID
+     * @return 物品列表
+     */
+    List<Object> getItemsByUserId(Long userId);
 } 

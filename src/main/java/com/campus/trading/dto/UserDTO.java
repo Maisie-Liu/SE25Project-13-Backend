@@ -17,12 +17,14 @@ public class UserDTO {
     private Set<String> roles;
     private Integer status;
     private LocalDateTime lastLoginTime;
+    private String bio;
+    private String location;
     private LocalDateTime createTime;
     
     public UserDTO() {
     }
     
-    public UserDTO(Long id, String username, String nickname, String email, String phone, String avatarUrl, Set<String> roles, Integer status, LocalDateTime lastLoginTime, LocalDateTime createTime) {
+    public UserDTO(Long id, String username, String nickname, String email, String phone, String avatarUrl, Set<String> roles, Integer status, LocalDateTime lastLoginTime, String bio, String location, LocalDateTime createTime) {
         this.id = id;
         this.username = username;
         this.nickname = nickname;
@@ -32,6 +34,8 @@ public class UserDTO {
         this.roles = roles;
         this.status = status;
         this.lastLoginTime = lastLoginTime;
+        this.bio = bio;
+        this.location = location;
         this.createTime = createTime;
     }
     
@@ -107,6 +111,22 @@ public class UserDTO {
         this.lastLoginTime = lastLoginTime;
     }
     
+    public String getBio() {
+        return bio;
+    }
+    
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+    
+    public String getLocation() {
+        return location;
+    }
+    
+    public void setLocation(String location) {
+        this.location = location;
+    }
+    
     public LocalDateTime getCreateTime() {
         return createTime;
     }
@@ -164,6 +184,16 @@ public class UserDTO {
         
         public Builder lastLoginTime(LocalDateTime lastLoginTime) {
             dto.setLastLoginTime(lastLoginTime);
+            return this;
+        }
+        
+        public Builder bio(String bio) {
+            dto.setBio(bio);
+            return this;
+        }
+        
+        public Builder location(String location) {
+            dto.setLocation(location);
             return this;
         }
         
