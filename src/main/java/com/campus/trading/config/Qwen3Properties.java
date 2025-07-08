@@ -6,9 +6,8 @@ import org.springframework.stereotype.Component;
 
 @Data
 @Component
-@ConfigurationProperties(prefix = "app.tencentcloud")
-public class TencentCloudProperties {
-    private String secretId;
-    private String secretKey;
-    private String region;
+@ConfigurationProperties(prefix = "app.qwen3")
+public class Qwen3Properties {
+    private String apiKey;
+    private String baseUrl;
 }

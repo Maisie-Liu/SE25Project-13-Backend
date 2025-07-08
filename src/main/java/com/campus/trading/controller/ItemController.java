@@ -188,18 +188,6 @@ public class ItemController {
     }
 
     /**
-     * 上传物品图片
-     *
-     * @param file 图片文件
-     * @return 图片URL
-     */
-    @PostMapping("/upload-image")
-    public ApiResponse<String> uploadItemImage(@RequestParam("file") MultipartFile file) {
-        String imageUrl = itemService.uploadItemImage(file);
-        return ApiResponse.success("上传图片成功", imageUrl);
-    }
-
-    /**
      * 根据图片生成物品描述
      *
      * @param imageId 图片ID

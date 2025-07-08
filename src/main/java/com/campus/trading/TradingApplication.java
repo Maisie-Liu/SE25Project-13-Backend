@@ -1,6 +1,6 @@
 package com.campus.trading;
 
-import com.campus.trading.config.DeepSeekProperties;
+import com.campus.trading.config.Qwen3Properties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
@@ -9,7 +9,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import com.campus.trading.config.TencentCloudProperties;
 
 /**
  * 校园二手交易平台启动类
@@ -18,7 +17,7 @@ import com.campus.trading.config.TencentCloudProperties;
 @EnableJpaAuditing
 @EnableAsync
 @EnableScheduling
-@EnableConfigurationProperties({TencentCloudProperties.class, DeepSeekProperties.class})
+@EnableConfigurationProperties({Qwen3Properties.class})
 public class TradingApplication {
 
     public static void main(String[] args) {

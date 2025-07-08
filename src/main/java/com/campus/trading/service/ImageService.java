@@ -31,4 +31,9 @@ public interface ImageService {
      * 生成有时效性的图片访问令牌
      */
     String generateImageAccessToken(String imageId);
+
+    /**
+     * 获取图片文件大小
+     */
+    long getImageFileLength(String imageId);
 } 

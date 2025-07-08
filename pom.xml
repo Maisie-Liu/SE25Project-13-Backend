@@ -147,6 +147,11 @@
             <artifactId>tencentcloud-sdk-java</artifactId>
             <version>3.1.1012</version>
         </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>dashscope-sdk-java</artifactId>
+            <version>2.20.7</version>
+        </dependency>
     </dependencies>
     
     <build>

@@ -1,5 +1,6 @@
 package com.campus.trading.service.impl;
 
+import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationOutput;
 import com.campus.trading.dto.ItemCreateRequestDTO;
 import com.campus.trading.dto.ItemDTO;
 import com.campus.trading.dto.PageResponseDTO;
@@ -22,27 +23,24 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-import com.tencentcloudapi.common.Credential;
-import com.tencentcloudapi.common.exception.TencentCloudSDKException;
-import com.tencentcloudapi.common.profile.ClientProfile;
-import com.tencentcloudapi.common.profile.HttpProfile;
-import com.tencentcloudapi.tiia.v20190529.TiiaClient;
-import com.tencentcloudapi.tiia.v20190529.models.DetectProductRequest;
-import com.tencentcloudapi.tiia.v20190529.models.DetectProductResponse;
-import com.campus.trading.config.TencentCloudProperties;
-import com.campus.trading.config.DeepSeekProperties;
-import org.springframework.http.*;
-import org.springframework.web.client.RestTemplate;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.campus.trading.config.Qwen3Properties;
+import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversation;
+import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationParam;
+import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationResult;
+import com.alibaba.dashscope.common.MultiModalMessage;
+import com.alibaba.dashscope.common.Role;
+import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.exception.UploadFileException;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * 物品服务实现类
@@ -55,17 +53,15 @@ public class ItemServiceImpl implements ItemService {
     private final CategoryService categoryService;
     private static final Logger log = LoggerFactory.getLogger(ItemServiceImpl.class);
     private final ImageService imageService;
-    private final TencentCloudProperties tencentCloudProperties;
-    private final DeepSeekProperties deepSeekProperties;
+    private final Qwen3Properties qwen3Properties;
 
     @Autowired
-    public ItemServiceImpl(ItemRepository itemRepository, UserService userService, CategoryService categoryService, ImageService imageService, TencentCloudProperties tencentCloudProperties, DeepSeekProperties deepSeekProperties) {
+    public ItemServiceImpl(ItemRepository itemRepository, UserService userService, CategoryService categoryService, ImageService imageService, Qwen3Properties qwen3Properties) {
         this.itemRepository = itemRepository;
         this.userService = userService;
         this.categoryService = categoryService;
         this.imageService = imageService;
-        this.tencentCloudProperties = tencentCloudProperties;
-        this.deepSeekProperties = deepSeekProperties;
+        this.qwen3Properties = qwen3Properties;
     }
 
     @Override
@@ -287,43 +283,12 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public String uploadItemImage(MultipartFile file) {
-        // 实现文件上传逻辑
-        // 简单实现，返回一个假的URL
-        return "http://example.com/images/" + System.currentTimeMillis() + ".jpg";
-    }
-
-    @Override
     public String generateItemDescription(String imageId) throws JsonProcessingException {
-        // 1. 通过图片ID获取带token的公网图片URL（AI专用）
+        // 1. 获取公网可访问的图片URL
         String imageUrl = imageService.generateAIImageAccessToken(imageId);
-        log.info(imageUrl);
-        // 2. 调用腾讯云商品识别
-        String detectResultJson = detectProductByImageUrl(imageUrl);
-        // 3. 解析商品名称和类别，取置信度最高的商品
-        ObjectMapper mapper = new ObjectMapper();
-        Map<String, Object> respMap = mapper.readValue(detectResultJson, Map.class);
-        Object responseObj = respMap.get("Response");
-        if (responseObj == null) {
-            log.error("腾讯云商品识别API返回异常: {}", detectResultJson);
-            return "AI识别失败，返回内容异常";
-        }
-        Map<String, Object> response = (Map<String, Object>) responseObj;
-        List<Map<String, Object>> products = (List<Map<String, Object>>) response.get("Products");
-        if (products == null || products.isEmpty()) {
-            return "未识别到商品，无法生成描述。";
-        }
-        // 选出置信度最高的商品
-        Map<String, Object> bestProduct = products.get(0);
-        for (Map<String, Object> prod : products) {
-            if (((Number)prod.get("Confidence")).intValue() > ((Number)bestProduct.get("Confidence")).intValue()) {
-                bestProduct = prod;
-            }
-        }
-        String name = (String) bestProduct.get("Name");
-        String category = (String) bestProduct.get("Parents");
-        // 4. 调用DeepSeek生成文案
-        return callDeepSeekForDescription(name, category);
+        log.info("Qwen3 image url: {}", imageUrl);
+        // 2. 直接调用Qwen3进行识别和文案生成
+        return callQwen3ForImageDescription(imageUrl);
     }
 
     @Override
@@ -422,66 +387,40 @@ public class ItemServiceImpl implements ItemService {
         return userService.findByUsername(username);
     }
 
-    // 商品识别
-    public String detectProductByImageUrl(String imageUrl) {
+    // 辅助方法：调用Qwen3生成商品描述
+    private String callQwen3ForImageDescription(String imageUrl) {
         try {
-            Credential cred = new Credential(
-                tencentCloudProperties.getSecretId(),
-                tencentCloudProperties.getSecretKey()
-            );
-            HttpProfile httpProfile = new HttpProfile();
-            httpProfile.setEndpoint("tiia.tencentcloudapi.com");
-            ClientProfile clientProfile = new ClientProfile();
-            clientProfile.setHttpProfile(httpProfile);
-
-            TiiaClient client = new TiiaClient(cred, tencentCloudProperties.getRegion(), clientProfile);
-
-            DetectProductRequest req = new DetectProductRequest();
-            req.setImageUrl(imageUrl);
-
-            DetectProductResponse resp = client.DetectProduct(req);
-
-            return DetectProductResponse.toJsonString(resp);
-        } catch (TencentCloudSDKException e) {
-            log.error("调用腾讯云商品识别失败", e);
-            throw new RuntimeException("商品识别失败: " + e.getMessage());
-        }
-    }
-
-    private String callDeepSeekForDescription(String productName, String productCategory) {
-        try {
-            RestTemplate restTemplate = new RestTemplate();
-            String url = deepSeekProperties.getBaseUrl() + "/chat/completions";
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(deepSeekProperties.getApiKey());
-
-            // 构造 prompt
-            String prompt = String.format("请为商品\"%s\"（类别：%s）生成一段简洁吸引人的二手商品描述，突出产品名称、应用场景、物品状态等。", productName, productCategory);
-
-            Map<String, Object> body = new HashMap<>();
-            body.put("model", "deepseek-chat");
-            List<Map<String, String>> messages = new ArrayList<>();
-            messages.add(Map.of("role", "system", "content", "你是一个优秀的生成二手商品描述的文案助手。"));
-            messages.add(Map.of("role", "user", "content", prompt));
-            body.put("messages", messages);
-            body.put("stream", false);
-
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
-
-            if (response.getStatusCode() == HttpStatus.OK) {
-                ObjectMapper mapper = new ObjectMapper();
-                Map<String, Object> respMap = mapper.readValue(response.getBody(), Map.class);
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) respMap.get("choices");
-                if (choices != null && !choices.isEmpty()) {
-                    Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-                    return (String) message.get("content");
+            MultiModalConversation conv = new MultiModalConversation();
+            MultiModalMessage userMessage = MultiModalMessage.builder()
+                    .role(Role.USER.getValue())
+                    .content(Arrays.asList(
+                            Collections.singletonMap("image", imageUrl),
+                            Collections.singletonMap("text", "请识别图片中的商品，并仿照闲鱼发帖风格，生成一段简洁吸引人的、发布于于大学校园二手物品交易平台的商品描述，避免使用markdown进行格式渲染。")
+                    ))
+                    .build();
+            MultiModalConversationParam param = MultiModalConversationParam.builder()
+                    .apiKey(qwen3Properties.getApiKey())
+                    .model("qwen-vl-max")
+                    .message(userMessage)
+                    .build();
+            MultiModalConversationResult result = conv.call(param);
+            if (result != null && result.getOutput() != null
+                && result.getOutput().getChoices() != null
+                && !result.getOutput().getChoices().isEmpty()) {
+            MultiModalConversationOutput.Choice choice = result.getOutput().getChoices().get(0);
+            if (choice != null && choice.getMessage() != null
+                    && choice.getMessage().getContent() != null
+                    && !choice.getMessage().getContent().isEmpty()) {
+                Object textObj = choice.getMessage().getContent().get(0).get("text");
+                if (textObj != null) {
+                    return textObj.toString();
                 }
             }
+        }
+            log.info("Qwen3生成描述失败, result: {}", result);
             return "AI生成描述失败";
-        } catch (Exception e) {
-            log.error("调用DeepSeek生成商品描述失败", e);
+        } catch (ApiException | NoApiKeyException | UploadFileException e) {
+            log.error("调用Qwen3生成商品描述失败", e);
             return "AI生成描述失败";
         }
     }

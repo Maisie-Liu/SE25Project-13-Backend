@@ -65,4 +65,9 @@ public class ImageServiceImpl implements ImageService {
         String prefix = forAI && aiImageUrlPrefix != null && !aiImageUrlPrefix.isEmpty() ? aiImageUrlPrefix : imageUrlPrefix;
         return prefix.endsWith("/") ? prefix + imageId : prefix + "/" + imageId;
     }
+
+    @Override
+    public long getImageFileLength(String imageId) {
+        return imageDAO.getImageFileLengthById(imageId);
+    }
 } 

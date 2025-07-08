@@ -114,14 +114,6 @@ public interface ItemService {
                                         int pageNum, int pageSize, String sort, String order);
 
     /**
-     * 上传物品图片
-     *
-     * @param file 图片文件
-     * @return 图片URL
-     */
-    String uploadItemImage(MultipartFile file);
-
-    /**
      * 根据图片生成物品描述
      *
      * @param imageUrl 图片URL

@@ -88,9 +88,15 @@ public class ImageController {
             log.error("Image not found in GridFS, id={}", id);
             return ResponseEntity.notFound().build();
         }
+        long contentLength = imageService.getImageFileLength(id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"image_" + id + "\"");
+        headers.setContentType(MediaType.IMAGE_JPEG);
+        if (contentLength > 0) {
+            headers.setContentLength(contentLength);
+        }
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"image_" + id + "\"")
-                .contentType(MediaType.IMAGE_JPEG)
+                .headers(headers)
                 .body(new InputStreamResource(inputStream));
     }
 
