@@ -237,7 +237,8 @@ public class UserServiceImpl implements UserService {
     }
     
     // 辅助方法：将实体转换为DTO
-    private UserDTO convertToDTO(User user) {
+    @Override
+    public UserDTO convertToDTO(User user) {
         return UserDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -250,6 +251,7 @@ public class UserServiceImpl implements UserService {
                 .lastLoginTime(user.getLastLoginTime())
                 .createTime(user.getCreateTime())
                 .bio(user.getBio())
+                .allowPersonalizedRecommend(user.isAllowPersonalizedRecommend())
                 .build();
     }
 } 

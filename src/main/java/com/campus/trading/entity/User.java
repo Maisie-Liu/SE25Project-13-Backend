@@ -93,6 +93,12 @@ public class User {
      */
     @Column(length = 255)
     private String bio;
+
+    /**
+     * 是否允许个性化推荐和数据采集
+     */
+    @Column(nullable = false)
+    private boolean allowPersonalizedRecommend = true;
     
     public User() {
     }
@@ -201,6 +207,14 @@ public class User {
         this.bio = bio;
     }
     
+    public boolean isAllowPersonalizedRecommend() {
+        return allowPersonalizedRecommend;
+    }
+    
+    public void setAllowPersonalizedRecommend(boolean allowPersonalizedRecommend) {
+        this.allowPersonalizedRecommend = allowPersonalizedRecommend;
+    }
+    
     public static Builder builder() {
         return new Builder();
     }
@@ -270,6 +284,11 @@ public class User {
         
         public Builder bio(String bio) {
             user.setBio(bio);
+            return this;
+        }
+        
+        public Builder allowPersonalizedRecommend(boolean allowPersonalizedRecommend) {
+            user.setAllowPersonalizedRecommend(allowPersonalizedRecommend);
             return this;
         }
         

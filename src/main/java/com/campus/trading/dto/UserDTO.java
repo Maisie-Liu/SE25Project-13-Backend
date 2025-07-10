@@ -19,6 +19,7 @@ public class UserDTO {
     private LocalDateTime lastLoginTime;
     private LocalDateTime createTime;
     private String bio;
+    private Boolean allowPersonalizedRecommend;
     
     public UserDTO() {
     }
@@ -133,6 +134,14 @@ public class UserDTO {
         this.bio = bio;
     }
     
+    public Boolean getAllowPersonalizedRecommend() {
+        return allowPersonalizedRecommend;
+    }
+    
+    public void setAllowPersonalizedRecommend(Boolean allowPersonalizedRecommend) {
+        this.allowPersonalizedRecommend = allowPersonalizedRecommend;
+    }
+    
     public static Builder builder() {
         return new Builder();
     }
@@ -192,6 +201,11 @@ public class UserDTO {
         
         public Builder bio(String bio) {
             dto.setBio(bio);
+            return this;
+        }
+        
+        public Builder allowPersonalizedRecommend(Boolean allowPersonalizedRecommend) {
+            dto.setAllowPersonalizedRecommend(allowPersonalizedRecommend);
             return this;
         }
         

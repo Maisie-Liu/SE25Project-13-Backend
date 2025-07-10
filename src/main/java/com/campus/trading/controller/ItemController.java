@@ -4,12 +4,17 @@ import com.campus.trading.dto.ApiResponse;
 import com.campus.trading.dto.ItemCreateRequestDTO;
 import com.campus.trading.dto.ItemDTO;
 import com.campus.trading.dto.PageResponseDTO;
+import com.campus.trading.entity.User;
 import com.campus.trading.service.ItemService;
+import com.campus.trading.service.UserService;
+import com.campus.trading.service.UserViewService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
@@ -22,9 +27,14 @@ import java.util.Map;
 public class ItemController {
 
     private final ItemService itemService;
-    
-    public ItemController(ItemService itemService) {
+    private final UserViewService userViewService;
+    private final UserService userService;
+
+    @Autowired
+    public ItemController(ItemService itemService, UserViewService userViewService, UserService userService) {
         this.itemService = itemService;
+        this.userViewService = userViewService;
+        this.userService = userService;
     }
 
     /**
@@ -59,11 +69,18 @@ public class ItemController {
      * @return 物品详情
      */
     @GetMapping("/{id}")
-    public ApiResponse<ItemDTO> getItemById(@PathVariable Long id) {
+    public ApiResponse<ItemDTO> getItemById(@PathVariable Long id, Principal principal) {
         // 先获取物品详情
         ItemDTO itemDTO = itemService.getItemById(id);
         // 再增加物品热度
         itemService.incrementItemPopularity(id);
+        // 自动记录浏览行为
+        if (principal != null) {
+            User user = userService.getCurrentUser(principal);
+            if (user.isAllowPersonalizedRecommend()) {
+                userViewService.recordView(user, itemService.getItemEntityById(id));
+            }
+        }
         return ApiResponse.success(itemDTO);
     }
 

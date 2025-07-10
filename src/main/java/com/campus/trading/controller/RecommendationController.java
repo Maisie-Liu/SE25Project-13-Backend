@@ -12,8 +12,9 @@ import java.security.Principal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/recommend")
+@RequestMapping("/recommend")
 public class RecommendationController {
+    // TODO 统一依赖注入风格
     private final RecommendationService recommendationService;
     private final UserService userService;
 

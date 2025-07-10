@@ -111,4 +111,6 @@ public interface UserService {
      * @return 用户对象
      */
     User getCurrentUser(java.security.Principal principal);
+
+    UserDTO convertToDTO(User user);
 }

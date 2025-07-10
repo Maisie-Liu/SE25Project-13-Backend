@@ -46,7 +46,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                     .sorted((a, b) -> Double.compare(b.getValue(), a.getValue()))
                     .limit(3)
                     .map(Map.Entry::getKey)
-                    .toList();
+                    .collect(Collectors.toList());
             itemPage = itemRepository.findByCategoryIdInAndStatusOrderByPopularityDesc(topCategories, 1, PageRequest.of(pageNum - 1, pageSize));
         }
         return itemPage.map(itemService::convertToDTO);
