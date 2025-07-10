@@ -20,7 +20,6 @@ public class UserDTO {
     private String bio;
     private String location;
     private LocalDateTime createTime;
-    private String bio;
     
     public UserDTO() {
     }
@@ -38,7 +37,6 @@ public class UserDTO {
         this.bio = bio;
         this.location = location;
         this.createTime = createTime;
-        this.bio = bio;
     }
     
     public Long getId() {
@@ -145,14 +143,6 @@ public class UserDTO {
         this.createTime = createTime;
     }
     
-    public String getBio() {
-        return bio;
-    }
-    
-    public void setBio(String bio) {
-        this.bio = bio;
-    }
-    
     public static Builder builder() {
         return new Builder();
     }
@@ -217,11 +207,6 @@ public class UserDTO {
         
         public Builder createTime(LocalDateTime createTime) {
             dto.setCreateTime(createTime);
-            return this;
-        }
-        
-        public Builder bio(String bio) {
-            dto.setBio(bio);
             return this;
         }
         

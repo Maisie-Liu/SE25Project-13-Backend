@@ -372,49 +372,57 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public Map<String, Long> getPlatformStatistics() {
         Map<String, Long> statistics = new HashMap<>();
-        
-        // 获取上架商品总数
-        long totalItems = itemRepository.countByStatus(1);
-        statistics.put("totalItems", totalItems);
-        
-        // 获取成交订单总数（状态为3表示已售出）
-        long completedOrders = itemRepository.countByStatus(3);
-        statistics.put("completedOrders", completedOrders);
-        
-        // 获取注册用户总数
-        long totalUsers = userService.getTotalUsers();
-        statistics.put("totalUsers", totalUsers);
-        
-        // 添加调试日志
-        log.info("Platform statistics: {}", statistics);
-        
+        statistics.put("totalItems", itemRepository.count());
+        statistics.put("totalUsers", userService.getTotalUsers());
+        statistics.put("totalListedItems", itemRepository.countByStatus(1));
         return statistics;
     }
 
     @Override
     public ItemDTO convertToDTO(Item item) {
-        List<String> imageIds = item.getImageIds();
-        List<String> imageUrls = imageIds == null ? null : imageIds.stream()
-            .map(imageService::generateImageAccessToken)
-            .collect(java.util.stream.Collectors.toList());
+        if (item == null) {
+            return null;
+        }
+        
+        // 处理图片URLs
+        List<String> imageUrls = null;
+        if (item.getImageIds() != null) {
+            imageUrls = item.getImageIds().stream()
+                .map(imageService::generateImageAccessToken)
+                .collect(Collectors.toList());
+        }
+        
         return ItemDTO.builder()
                 .id(item.getId())
                 .name(item.getName())
-                .categoryId(item.getCategory() != null ? item.getCategory().getId() : null)
-                .categoryName(item.getCategory() != null ? item.getCategory().getName() : null)
                 .price(item.getPrice())
                 .description(item.getDescription())
                 .imageUrls(imageUrls)
+                .imageIds(item.getImageIds())
+                .categoryId(item.getCategory() != null ? item.getCategory().getId() : null)
+                .categoryName(item.getCategory() != null ? item.getCategory().getName() : null)
                 .condition(item.getItemCondition())
                 .status(item.getStatus())
-                .popularity(item.getPopularity())
-                .userId(item.getUser() != null ? item.getUser().getId() : null)
-                .username(item.getUser() != null ? item.getUser().getUsername() : null)
-                .userAvatar(item.getUser() != null ? imageService.generateImageAccessToken(item.getUser().getAvatarImageId()) : null)
+                .userId(item.getUser().getId())
+                .username(item.getUser().getUsername())
                 .createTime(item.getCreateTime())
-                .updateTime(item.getUpdateTime())
+                .popularity(item.getPopularity())
                 .stock(item.getStock())
                 .build();
+    }
+    
+    @Override
+    public List<Object> getItemsByUserId(Long userId) {
+        // 获取用户
+        User user = userService.findById(userId);
+        
+        // 查询用户的所有物品（按创建时间倒序）
+        List<Item> items = itemRepository.findByUserOrderByCreateTimeDesc(user);
+        
+        // 转换为DTO并返回
+        return items.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     // 新增：ES实体转DTO
