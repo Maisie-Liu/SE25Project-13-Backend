@@ -1,5 +1,6 @@
 package com.campus.trading.service.impl;
 
+import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationOutput;
 import com.campus.trading.dto.ItemCreateRequestDTO;
 import com.campus.trading.dto.ItemDTO;
 import com.campus.trading.dto.PageResponseDTO;
@@ -11,6 +12,7 @@ import com.campus.trading.repository.CategoryRepository;
 import com.campus.trading.service.CategoryService;
 import com.campus.trading.service.ItemService;
 import com.campus.trading.service.UserService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.campus.trading.service.ImageService;
@@ -23,12 +25,19 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
+import com.campus.trading.config.Qwen3Properties;
+import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversation;
+import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationParam;
+import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationResult;
+import com.alibaba.dashscope.common.MultiModalMessage;
+import com.alibaba.dashscope.common.Role;
+import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.exception.NoApiKeyException;
+import com.alibaba.dashscope.exception.UploadFileException;
 import org.springframework.data.jpa.domain.Specification;
 import javax.persistence.criteria.Predicate;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +45,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import com.campus.trading.entity.ItemDocument;
 import com.campus.trading.repository.ItemESRepository;
+import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * 物品服务实现类
@@ -50,15 +61,17 @@ public class ItemServiceImpl implements ItemService {
     private final ImageService imageService;
     private final CategoryRepository categoryRepository;
     private final ItemESRepository itemESRepository;
+    private final Qwen3Properties qwen3Properties;
 
     @Autowired
-    public ItemServiceImpl(ItemRepository itemRepository, UserService userService, CategoryService categoryService, ImageService imageService, CategoryRepository categoryRepository, ItemESRepository itemESRepository) {
+    public ItemServiceImpl(ItemRepository itemRepository, UserService userService, CategoryService categoryService, ImageService imageService, CategoryRepository categoryRepository, ItemESRepository itemESRepository, Qwen3Properties qwen3Properties) {
         this.itemRepository = itemRepository;
         this.userService = userService;
         this.categoryService = categoryService;
         this.imageService = imageService;
         this.categoryRepository = categoryRepository;
         this.itemESRepository = itemESRepository;
+        this.qwen3Properties = qwen3Properties;
     }
 
     @Override
@@ -329,17 +342,12 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public String uploadItemImage(MultipartFile file) {
-        // 实现文件上传逻辑
-        // 简单实现，返回一个假的URL
-        return "http://example.com/images/" + System.currentTimeMillis() + ".jpg";
-    }
-
-    @Override
-    public String generateItemDescription(String imageUrl) {
-        // 实现根据图片生成描述的逻辑
-        // 简单实现，返回一个假的描述
-        return "这是一个自动生成的物品描述。";
+    public String generateItemDescription(String imageId) throws JsonProcessingException {
+        // 1. 获取公网可访问的图片URL
+        String imageUrl = imageService.generateAIImageAccessToken(imageId);
+        log.info("Qwen3 image url: {}", imageUrl);
+        // 2. 直接调用Qwen3进行识别和文案生成
+        return callQwen3ForImageDescription(imageUrl);
     }
 
     @Override
@@ -372,49 +380,57 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public Map<String, Long> getPlatformStatistics() {
         Map<String, Long> statistics = new HashMap<>();
-        
-        // 获取上架商品总数
-        long totalItems = itemRepository.countByStatus(1);
-        statistics.put("totalItems", totalItems);
-        
-        // 获取成交订单总数（状态为3表示已售出）
-        long completedOrders = itemRepository.countByStatus(3);
-        statistics.put("completedOrders", completedOrders);
-        
-        // 获取注册用户总数
-        long totalUsers = userService.getTotalUsers();
-        statistics.put("totalUsers", totalUsers);
-        
-        // 添加调试日志
-        log.info("Platform statistics: {}", statistics);
-        
+        statistics.put("totalItems", itemRepository.count());
+        statistics.put("totalUsers", userService.getTotalUsers());
+        statistics.put("totalListedItems", itemRepository.countByStatus(1));
         return statistics;
     }
 
     @Override
     public ItemDTO convertToDTO(Item item) {
-        List<String> imageIds = item.getImageIds();
-        List<String> imageUrls = imageIds == null ? null : imageIds.stream()
-            .map(imageService::generateImageAccessToken)
-            .collect(java.util.stream.Collectors.toList());
+        if (item == null) {
+            return null;
+        }
+        
+        // 处理图片URLs
+        List<String> imageUrls = null;
+        if (item.getImageIds() != null) {
+            imageUrls = item.getImageIds().stream()
+                .map(imageService::generateImageAccessToken)
+                .collect(Collectors.toList());
+        }
+        
         return ItemDTO.builder()
                 .id(item.getId())
                 .name(item.getName())
-                .categoryId(item.getCategory() != null ? item.getCategory().getId() : null)
-                .categoryName(item.getCategory() != null ? item.getCategory().getName() : null)
                 .price(item.getPrice())
                 .description(item.getDescription())
                 .imageUrls(imageUrls)
+                .imageIds(item.getImageIds())
+                .categoryId(item.getCategory() != null ? item.getCategory().getId() : null)
+                .categoryName(item.getCategory() != null ? item.getCategory().getName() : null)
                 .condition(item.getItemCondition())
                 .status(item.getStatus())
-                .popularity(item.getPopularity())
-                .userId(item.getUser() != null ? item.getUser().getId() : null)
-                .username(item.getUser() != null ? item.getUser().getUsername() : null)
-                .userAvatar(item.getUser() != null ? imageService.generateImageAccessToken(item.getUser().getAvatarImageId()) : null)
+                .userId(item.getUser().getId())
+                .username(item.getUser().getUsername())
                 .createTime(item.getCreateTime())
-                .updateTime(item.getUpdateTime())
+                .popularity(item.getPopularity())
                 .stock(item.getStock())
                 .build();
+    }
+    
+    @Override
+    public List<Object> getItemsByUserId(Long userId) {
+        // 获取用户
+        User user = userService.findById(userId);
+        
+        // 查询用户的所有物品（按创建时间倒序）
+        List<Item> items = itemRepository.findByUserOrderByCreateTimeDesc(user);
+        
+        // 转换为DTO并返回
+        return items.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     // 新增：ES实体转DTO
@@ -493,5 +509,43 @@ public class ItemServiceImpl implements ItemService {
         }
         itemESRepository.saveAll(docs);
         System.out.println("已同步商品数据到ElasticSearch，数量：" + docs.size());
+    }
+
+    // 辅助方法：调用Qwen3生成商品描述
+    private String callQwen3ForImageDescription(String imageUrl) {
+        try {
+            MultiModalConversation conv = new MultiModalConversation();
+            MultiModalMessage userMessage = MultiModalMessage.builder()
+                    .role(Role.USER.getValue())
+                    .content(Arrays.asList(
+                            Collections.singletonMap("image", imageUrl),
+                            Collections.singletonMap("text", "请识别图片中的商品，并仿照闲鱼发帖风格，生成一段简洁吸引人的、发布于于大学校园二手物品交易平台的商品描述，避免使用markdown进行格式渲染。")
+                    ))
+                    .build();
+            MultiModalConversationParam param = MultiModalConversationParam.builder()
+                    .apiKey(qwen3Properties.getApiKey())
+                    .model("qwen-vl-max")
+                    .message(userMessage)
+                    .build();
+            MultiModalConversationResult result = conv.call(param);
+            if (result != null && result.getOutput() != null
+                && result.getOutput().getChoices() != null
+                && !result.getOutput().getChoices().isEmpty()) {
+            MultiModalConversationOutput.Choice choice = result.getOutput().getChoices().get(0);
+            if (choice != null && choice.getMessage() != null
+                    && choice.getMessage().getContent() != null
+                    && !choice.getMessage().getContent().isEmpty()) {
+                Object textObj = choice.getMessage().getContent().get(0).get("text");
+                if (textObj != null) {
+                    return textObj.toString();
+                }
+            }
+        }
+            log.info("Qwen3生成描述失败, result: {}", result);
+            return "AI生成描述失败";
+        } catch (ApiException | NoApiKeyException | UploadFileException e) {
+            log.error("调用Qwen3生成商品描述失败", e);
+            return "AI生成描述失败";
+        }
     }
 } 

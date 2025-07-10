@@ -9,6 +9,8 @@ import com.campus.trading.repository.UserRepository;
 import com.campus.trading.service.UserService;
 import com.campus.trading.config.JwtUtils;
 import com.campus.trading.service.ImageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -36,6 +38,7 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
     private final ImageService imageService;
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
@@ -215,6 +218,56 @@ public class UserServiceImpl implements UserService {
         currentUser.setAvatarImageId(imageId);
         userRepository.save(currentUser);
     }
+    
+    @Override
+    public UserDTO getUserPublicProfile(Long userId) {
+        try {
+            logger.debug("开始查询用户公开资料，用户ID: {}", userId);
+            
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> {
+                        logger.warn("找不到用户，ID: {}", userId);
+                        return new UsernameNotFoundException("用户不存在: ID=" + userId);
+                    });
+            
+            logger.debug("找到用户: {}, 昵称: {}", user.getUsername(), user.getNickname());
+            
+            // 输出调试信息
+            logger.debug("用户信息 - ID: {}, 用户名: {}, 昵称: {}, 头像ID: {}, 简介: {}, 位置: {}", 
+                    user.getId(), user.getUsername(), user.getNickname(), 
+                    user.getAvatarImageId(), user.getBio(), user.getLocation());
+            
+            String avatarUrl = null;
+            if (user.getAvatarImageId() != null && !user.getAvatarImageId().isEmpty()) {
+                avatarUrl = imageService.generateImageAccessToken(user.getAvatarImageId());
+                logger.debug("用户头像URL生成: {}", avatarUrl);
+            } else {
+                // 使用默认头像
+                avatarUrl = "/api/image/default-avatar.png";
+                logger.debug("用户没有设置头像，使用默认头像: {}", avatarUrl);
+            }
+            
+            // 只返回公开信息，不包含敏感字段
+            UserDTO dto = UserDTO.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .nickname(user.getNickname())
+                    .avatarUrl(avatarUrl)
+                    .bio(user.getBio() != null ? user.getBio() : "这位用户很懒，还没有填写个人简介")
+                    .location(user.getLocation() != null ? user.getLocation() : "未知")
+                    .createTime(user.getCreateTime())
+                    .build();
+            
+            logger.debug("用户公开资料DTO构建成功: {}", dto);
+            return dto;
+        } catch (UsernameNotFoundException e) {
+            logger.warn("查询用户公开资料失败: {}", e.getMessage());
+            return null;
+        } catch (Exception e) {
+            logger.error("获取用户公开资料时发生错误，用户ID: {}, 错误: {}", userId, e.getMessage(), e);
+            return null;
+        }
+    }
 
     // 辅助方法：生成Token
     private String generateToken(User user) {
@@ -239,6 +292,8 @@ public class UserServiceImpl implements UserService {
                 .avatarUrl(imageService.generateImageAccessToken(user.getAvatarImageId()))
                 .roles(user.getRoles())
                 .status(user.getStatus())
+                .bio(user.getBio())
+                .location(user.getLocation())
                 .lastLoginTime(user.getLastLoginTime())
                 .createTime(user.getCreateTime())
                 .bio(user.getBio())

@@ -16,6 +16,7 @@ public class ItemDTO {
     private BigDecimal price;
     private String description;
     private List<String> images;
+    private List<String> imageIds;
     private Integer condition;
     private Integer status;
     private Integer popularity;
@@ -30,7 +31,7 @@ public class ItemDTO {
     public ItemDTO() {
     }
     
-    public ItemDTO(Long id, String name, Long categoryId, String categoryName, BigDecimal price, String description, List<String> images, Integer condition, Integer status, Integer popularity, Long userId, String username, String userAvatar, LocalDateTime createTime, LocalDateTime updateTime, Long favoriteId, Integer stock) {
+    public ItemDTO(Long id, String name, Long categoryId, String categoryName, BigDecimal price, String description, List<String> images, List<String> imageIds, Integer condition, Integer status, Integer popularity, Long userId, String username, String userAvatar, LocalDateTime createTime, LocalDateTime updateTime, Long favoriteId, Integer stock) {
         this.id = id;
         this.name = name;
         this.categoryId = categoryId;
@@ -38,6 +39,7 @@ public class ItemDTO {
         this.price = price;
         this.description = description;
         this.images = images;
+        this.imageIds = imageIds;
         this.condition = condition;
         this.status = status;
         this.popularity = popularity;
@@ -104,6 +106,14 @@ public class ItemDTO {
     
     public void setImages(List<String> images) {
         this.images = images;
+    }
+    
+    public List<String> getImageIds() {
+        return imageIds;
+    }
+    
+    public void setImageIds(List<String> imageIds) {
+        this.imageIds = imageIds;
     }
     
     public Integer getCondition() {
@@ -225,6 +235,11 @@ public class ItemDTO {
         
         public Builder imageUrls(List<String> imageUrls) {
             dto.setImages(imageUrls);
+            return this;
+        }
+        
+        public Builder imageIds(List<String> imageIds) {
+            dto.setImageIds(imageIds);
             return this;
         }
         
