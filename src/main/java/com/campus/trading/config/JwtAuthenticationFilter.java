@@ -35,7 +35,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     
     // 定义公开路径列表，不需要token验证
     private final List<String> publicPaths = Arrays.asList(
-            "/auth/**",
+            "/auth/login",
+            "/auth/register",
+            "/auth/check-username",
+            "/auth/check-email",
+            "/auth/check-phone",
+            "/auth/check-email-code",
+            "/auth/check-phone-code",
+            "/auth/check-email-code-by-phone",
             "/api/users/**", 
             "/image/**",
             "/api/image/**",
