@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+import com.campus.trading.service.impl.ItemServiceImpl;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 /**
@@ -22,6 +23,9 @@ public class TradingApplication {
 
     public static void main(String[] args) {
         ApplicationContext ctx = SpringApplication.run(TradingApplication.class, args);
+        // 自动同步商品数据到ES
+        ItemServiceImpl itemServiceImpl = ctx.getBean(ItemServiceImpl.class);
+        itemServiceImpl.syncAllItemsToES();
         String[] beans = ctx.getBeanNamesForType(RequestMappingHandlerMapping.class);
         System.out.println("===== 所有已注册的接口路径 =====");
         for (String bean : beans) {

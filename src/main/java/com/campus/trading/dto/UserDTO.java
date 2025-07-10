@@ -17,12 +17,14 @@ public class UserDTO {
     private Set<String> roles;
     private Integer status;
     private LocalDateTime lastLoginTime;
+    private String bio;
+    private String location;
     private LocalDateTime createTime;
     
     public UserDTO() {
     }
     
-    public UserDTO(Long id, String username, String nickname, String email, String phone, String avatarUrl, Set<String> roles, Integer status, LocalDateTime lastLoginTime, LocalDateTime createTime) {
+    public UserDTO(Long id, String username, String nickname, String email, String phone, String avatarUrl, Set<String> roles, Integer status, LocalDateTime lastLoginTime, LocalDateTime createTime, String bio) {
         this.id = id;
         this.username = username;
         this.nickname = nickname;
@@ -32,6 +34,8 @@ public class UserDTO {
         this.roles = roles;
         this.status = status;
         this.lastLoginTime = lastLoginTime;
+        this.bio = bio;
+        this.location = location;
         this.createTime = createTime;
     }
     
@@ -83,6 +87,14 @@ public class UserDTO {
         this.avatarUrl = avatarUrl;
     }
     
+    /**
+     * 设置用户头像图片ID的别名方法
+     * @param avatarImageId 头像图片ID
+     */
+    public void setAvatarImageId(String avatarImageId) {
+        this.avatarUrl = avatarImageId;
+    }
+    
     public Set<String> getRoles() {
         return roles;
     }
@@ -105,6 +117,22 @@ public class UserDTO {
     
     public void setLastLoginTime(LocalDateTime lastLoginTime) {
         this.lastLoginTime = lastLoginTime;
+    }
+    
+    public String getBio() {
+        return bio;
+    }
+    
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+    
+    public String getLocation() {
+        return location;
+    }
+    
+    public void setLocation(String location) {
+        this.location = location;
     }
     
     public LocalDateTime getCreateTime() {
@@ -164,6 +192,16 @@ public class UserDTO {
         
         public Builder lastLoginTime(LocalDateTime lastLoginTime) {
             dto.setLastLoginTime(lastLoginTime);
+            return this;
+        }
+        
+        public Builder bio(String bio) {
+            dto.setBio(bio);
+            return this;
+        }
+        
+        public Builder location(String location) {
+            dto.setLocation(location);
             return this;
         }
         
