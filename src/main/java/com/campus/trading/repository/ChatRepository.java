@@ -21,4 +21,7 @@ public interface ChatRepository extends JpaRepository<Chat, Long> {
     
     @Query("SELECT COUNT(c) FROM Chat c WHERE (c.user1 = :user OR c.user2 = :user)")
     long countChatsByUser(User user);
+
+    @Query("SELECT c FROM Chat c WHERE ((c.user1 = :user1 AND c.user2 = :user2) OR (c.user1 = :user2 AND c.user2 = :user1)) AND c.item = :item")
+    Optional<Chat> findChatByUsersAndItem(User user1, User user2, com.campus.trading.entity.Item item);
 } 

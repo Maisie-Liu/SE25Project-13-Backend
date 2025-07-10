@@ -222,7 +222,7 @@ public class ChatServiceImpl implements ChatService {
                 .orElseThrow(() -> new RuntimeException("物品不存在"));
         
         // 检查是否已存在聊天
-        Optional<Chat> existingChat = chatRepository.findChatByUsers(user1, user2);
+        Optional<Chat> existingChat = chatRepository.findChatByUsersAndItem(user1, user2, item);
         
         Chat chat;
         if (existingChat.isPresent()) {
@@ -238,16 +238,22 @@ public class ChatServiceImpl implements ChatService {
         }
         
         // 发送初始消息
-        if (initialMessage != null && !initialMessage.isEmpty()) {
-            ChatMessage message = new ChatMessage();
-            message.setChatId(chat.getId());
-            message.setSender(user1);
-            message.setRecipient(user2);
-            message.setContent(initialMessage);
-            message.setItem(item);
-            message.setRead(false);
-            messageRepository.save(message);
+        String msg = initialMessage;
+        if (msg == null || msg.trim().isEmpty()) {
+            msg = "你好，我想要看" + (item.getName() != null ? item.getName() : "该商品");
         }
+        ChatMessage message = new ChatMessage();
+        message.setChatId(chat.getId());
+        message.setSender(user1);
+        message.setRecipient(user2);
+        message.setContent(msg);
+        message.setItem(item);
+        message.setRead(false);
+        messageRepository.save(message);
+        
+        // 保存消息后，强制同步到 chat 的 lastMessage 字段
+        chat.setLastMessage(msg);
+        chatRepository.save(chat);
         
         // 转换为DTO
         ChatDTO dto = new ChatDTO();

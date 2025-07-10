@@ -57,10 +57,7 @@ spring:
         concurrency: 5
         max-concurrency: 10
   
-  # ElasticSearch配置
-  elasticsearch:
-    rest:
-      uris: http://localhost:9200
+
   
   # 文件上传配置
   servlet:
@@ -74,9 +71,13 @@ spring:
       host: localhost
       port: 27017
       database: campus_trading
-      username: test
-      password: test
-      authentication-database: admin
+      username: backend
+      password: backend111
+      authentication-database: campus_trading
+    # ElasticSearch配置
+    elasticsearch:
+      rest:
+        uris: http://localhost:9200
 
 # JWT配置
 jwt:

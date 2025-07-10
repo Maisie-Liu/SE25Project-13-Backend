@@ -79,4 +79,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @return 订单分页列表
      */
     Page<Order> findBySellerAndStatus(User seller, Integer status, Pageable pageable);
+
+    // 统计所有订单总数
+    long count();
 } 

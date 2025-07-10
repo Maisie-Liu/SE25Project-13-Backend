@@ -146,11 +146,25 @@ public interface ItemService {
     void incrementItemPopularity(Long id);
 
     /**
+     * 获取物品浏览量（popularity，优先Redis）
+     * @param itemId 物品ID
+     * @return 浏览量
+     */
+    long getItemPopularity(Long itemId);
+
+    /**
      * 获取平台统计数据
      *
      * @return 平台统计数据，包含商品总数、成交订单数和注册用户数
      */
     Map<String, Long> getPlatformStatistics();
+
+    /**
+     * 获取最热商品列表
+     * @param topN 前N个
+     * @return 最热商品DTO列表
+     */
+    List<ItemDTO> getHotItems(int topN);
 
     /**
      * 实体转DTO

@@ -43,4 +43,11 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
      * @return 是否收藏
      */
     boolean existsByUserAndItem(User user, Item item);
+
+    // 统计某个物品被收藏的数量
+    long countByItem(Item item);
+
+    // 统计所有物品的收藏量，返回物品id和收藏数
+    @org.springframework.data.jpa.repository.Query("SELECT f.item.id, COUNT(f.id) FROM Favorite f GROUP BY f.item.id")
+    java.util.List<Object[]> countFavoritesGroupByItem();
 } 

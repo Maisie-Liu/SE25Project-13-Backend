@@ -118,4 +118,10 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
      * 查询分类下上架且有库存的商品
      */
     Page<Item> findByCategoryIdAndStatusAndStockGreaterThan(Long categoryId, Integer status, Integer stock, Pageable pageable);
+
+    // 按收藏量降序分页查询上架且有库存的商品
+    @Query(value = "SELECT i.* FROM t_item i LEFT JOIN t_favorite f ON i.id = f.item_id WHERE i.status = 1 AND i.stock > 0 GROUP BY i.id ORDER BY COUNT(f.id) DESC, i.create_time DESC",
+           countQuery = "SELECT COUNT(DISTINCT i.id) FROM t_item i WHERE i.status = 1 AND i.stock > 0",
+           nativeQuery = true)
+    Page<Item> findAllOrderByFavoriteCountDesc(Pageable pageable);
 } 

@@ -36,6 +36,23 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import com.campus.trading.entity.ItemDocument;
 import com.campus.trading.repository.ItemESRepository;
+import com.campus.trading.repository.OrderRepository;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import java.util.Set;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchPhraseQueryBuilder;
+import org.elasticsearch.index.query.MultiMatchQueryBuilder;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.SearchHit;
 
 /**
  * 物品服务实现类
@@ -50,15 +67,23 @@ public class ItemServiceImpl implements ItemService {
     private final ImageService imageService;
     private final CategoryRepository categoryRepository;
     private final ItemESRepository itemESRepository;
+    private final OrderRepository orderRepository;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+    private static final String ITEM_VIEW_KEY_PREFIX = "item:view:";
+    private static final String PLATFORM_STATS_KEY = "platform:stats";
+    @Autowired(required = false)
+    private RestHighLevelClient restHighLevelClient;
 
     @Autowired
-    public ItemServiceImpl(ItemRepository itemRepository, UserService userService, CategoryService categoryService, ImageService imageService, CategoryRepository categoryRepository, ItemESRepository itemESRepository) {
+    public ItemServiceImpl(ItemRepository itemRepository, UserService userService, CategoryService categoryService, ImageService imageService, CategoryRepository categoryRepository, ItemESRepository itemESRepository, OrderRepository orderRepository) {
         this.itemRepository = itemRepository;
         this.userService = userService;
         this.categoryService = categoryService;
         this.imageService = imageService;
         this.categoryRepository = categoryRepository;
         this.itemESRepository = itemESRepository;
+        this.orderRepository = orderRepository;
     }
 
     @Override
@@ -83,6 +108,26 @@ public class ItemServiceImpl implements ItemService {
         
         // 保存物品
         Item savedItem = itemRepository.save(item);
+
+        // 新增：同步到ES
+        ItemDocument doc = new ItemDocument();
+        doc.setId(savedItem.getId());
+        doc.setName(savedItem.getName());
+        doc.setCategoryId(savedItem.getCategory() != null ? savedItem.getCategory().getId() : null);
+        doc.setCategoryName(savedItem.getCategory() != null ? savedItem.getCategory().getName() : null);
+        doc.setPrice(savedItem.getPrice());
+        doc.setDescription(savedItem.getDescription());
+        doc.setImageIds(savedItem.getImageIds());
+        doc.setItemCondition(savedItem.getItemCondition());
+        doc.setStatus(savedItem.getStatus());
+        doc.setPopularity(savedItem.getPopularity());
+        doc.setUserId(savedItem.getUser() != null ? savedItem.getUser().getId() : null);
+        doc.setUsername(savedItem.getUser() != null ? savedItem.getUser().getUsername() : null);
+        doc.setUserAvatar(null); // 如有头像可补充
+        doc.setCreateTime(savedItem.getCreateTime());
+        doc.setUpdateTime(savedItem.getUpdateTime());
+        doc.setStock(savedItem.getStock());
+        itemESRepository.save(doc);
         
         // 转换为DTO返回
         return convertToDTO(savedItem);
@@ -113,8 +158,20 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDTO getItemById(Long id) {
+        String cacheKey = "item:detail:" + id;
+        String cached = stringRedisTemplate.opsForValue().get(cacheKey);
+        if (cached != null) {
+            return com.alibaba.fastjson.JSON.parseObject(cached, ItemDTO.class);
+        }
+        // 缓存没有，查数据库
         Item item = getItemOrThrow(id);
-        return convertToDTO(item);
+        ItemDTO dto = convertToDTO(item);
+        // 只对热门商品写入缓存
+        Set<String> hotItemIds = stringRedisTemplate.opsForZSet().reverseRange("hot:items", 0, 4);
+        if (hotItemIds != null && hotItemIds.contains(id.toString())) {
+            stringRedisTemplate.opsForValue().set(cacheKey, com.alibaba.fastjson.JSON.toJSONString(dto), java.time.Duration.ofMinutes(10));
+        }
+        return dto;
     }
 
     @Override
@@ -230,9 +287,32 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public PageResponseDTO<ItemDTO> searchItems(String keyword, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, Integer conditionMin, Integer conditionMax, int pageNum, int pageSize, String sort, String order) {
-        // 只有keyword不为空时才用ES，否则直接用数据库
         if (keyword != null && !keyword.isEmpty()) {
-            List<ItemDocument> docs = itemESRepository.findByNameContainingOrDescriptionContaining(keyword, keyword);
+            List<ItemDocument> docs = new ArrayList<>();
+            // 优先用 match_phrase 查询
+            try {
+                SearchRequest searchRequest = new SearchRequest("items");
+                SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+                BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+                // match_phrase 查询 name 和 description
+                boolQuery.should(QueryBuilders.matchPhraseQuery("name", keyword));
+                boolQuery.should(QueryBuilders.matchPhraseQuery("description", keyword));
+                sourceBuilder.query(boolQuery);
+                sourceBuilder.from((pageNum - 1) * pageSize);
+                sourceBuilder.size(pageSize);
+                searchRequest.source(sourceBuilder);
+                SearchResponse response = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+                for (SearchHit hit : response.getHits().getHits()) {
+                    ItemDocument doc = com.alibaba.fastjson.JSON.parseObject(hit.getSourceAsString(), ItemDocument.class);
+                    docs.add(doc);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            // 如果 match_phrase 查不到，再用原有模糊匹配
+            if (docs.isEmpty()) {
+                docs = itemESRepository.findByNameContainingOrDescriptionContaining(keyword, keyword);
+            }
             // 过滤其它条件
             List<ItemDocument> filtered = docs.stream()
                 .filter(doc -> (categoryId == null || (doc.getCategoryId() != null && doc.getCategoryId().equals(categoryId)))
@@ -273,6 +353,13 @@ public class ItemServiceImpl implements ItemService {
         // keyword为空直接用数据库SQL
         Sort.Direction direction = "asc".equalsIgnoreCase(order) ? Sort.Direction.ASC : Sort.Direction.DESC;
         Sort sortObj;
+        if ("favorites".equalsIgnoreCase(sort)) {
+            // 按收藏量排序，调用自定义SQL
+            Pageable pageable = PageRequest.of(pageNum - 1, pageSize);
+            Page<Item> itemPage = itemRepository.findAllOrderByFavoriteCountDesc(pageable);
+            List<ItemDTO> itemDTOs = itemPage.getContent().stream().map(this::convertToDTO).collect(Collectors.toList());
+            return new PageResponseDTO<>(itemDTOs, itemPage.getTotalElements(), pageNum, pageSize, itemPage.getTotalPages());
+        }
         switch (sort.toLowerCase()) {
             case "price":
                 sortObj = Sort.by(direction, "price");
@@ -294,7 +381,7 @@ public class ItemServiceImpl implements ItemService {
             Predicate p = cb.conjunction();
             p = cb.and(p, cb.equal(root.get("status"), 1));
             p = cb.and(p, cb.greaterThan(root.get("stock"), 0));
-            if (keyword != null && !keyword.isEmpty()) {
+        if (keyword != null && !keyword.isEmpty()) {
                 Predicate nameLike = cb.like(root.get("name"), "%" + keyword + "%");
                 Predicate descLike = cb.like(root.get("description"), "%" + keyword + "%");
                 p = cb.and(p, cb.or(nameLike, descLike));
@@ -358,36 +445,54 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional
-    public void incrementItemPopularity(Long id) {
-        // 获取物品
-        Item item = getItemOrThrow(id);
-        
-        // 增加热度
-        item.setPopularity(item.getPopularity() + 1);
-        
-        // 保存更新
-        itemRepository.save(item);
+    public void incrementItemPopularity(Long itemId) {
+        String redisKey = ITEM_VIEW_KEY_PREFIX + itemId;
+        String value = stringRedisTemplate.opsForValue().get(redisKey);
+        if (value == null) {
+            // Redis 没有，查数据库并初始化
+            Item item = itemRepository.findById(itemId).orElse(null);
+            long dbPopularity = item != null ? item.getPopularity() : 0;
+            stringRedisTemplate.opsForValue().set(redisKey, String.valueOf(dbPopularity));
+        }
+        stringRedisTemplate.opsForValue().increment(redisKey, 1);
+        // 同步到热门榜单
+        stringRedisTemplate.opsForZSet().incrementScore("hot:items", itemId.toString(), 1);
+    }
+
+    @Override
+    public long getItemPopularity(Long itemId) {
+        String redisKey = ITEM_VIEW_KEY_PREFIX + itemId;
+        String value = stringRedisTemplate.opsForValue().get(redisKey);
+        if (value != null) {
+            return Long.parseLong(value);
+        }
+        // Redis 没有，查数据库
+        Item item = itemRepository.findById(itemId).orElse(null);
+        long dbPopularity = item != null ? item.getPopularity() : 0;
+        // 初始化 Redis
+        stringRedisTemplate.opsForValue().set(redisKey, String.valueOf(dbPopularity));
+        return dbPopularity;
     }
 
     @Override
     public Map<String, Long> getPlatformStatistics() {
         Map<String, Long> statistics = new HashMap<>();
-        
-        // 获取上架商品总数
-        long totalItems = itemRepository.countByStatus(1);
-        statistics.put("totalItems", totalItems);
-        
-        // 获取成交订单总数（状态为3表示已售出）
-        long completedOrders = itemRepository.countByStatus(3);
-        statistics.put("completedOrders", completedOrders);
-        
-        // 获取注册用户总数
-        long totalUsers = userService.getTotalUsers();
-        statistics.put("totalUsers", totalUsers);
-        
-        // 添加调试日志
-        log.info("Platform statistics: {}", statistics);
-        
+        Map<Object, Object> redisStats = stringRedisTemplate.opsForHash().entries(PLATFORM_STATS_KEY);
+        if (redisStats != null && !redisStats.isEmpty()) {
+            statistics.put("totalItems", Long.parseLong(redisStats.getOrDefault("totalItems", "0").toString()));
+            statistics.put("completedOrders", Long.parseLong(redisStats.getOrDefault("completedOrders", "0").toString()));
+            statistics.put("totalUsers", Long.parseLong(redisStats.getOrDefault("totalUsers", "0").toString()));
+            statistics.put("totalOrders", Long.parseLong(redisStats.getOrDefault("totalOrders", "0").toString()));
+            return statistics;
+        }
+        // Redis 没有时查数据库并写入 Redis
+        statistics.put("totalItems", itemRepository.countByStatus(1));
+        statistics.put("completedOrders", itemRepository.countByStatus(3));
+        statistics.put("totalUsers", userService.getTotalUsers());
+        statistics.put("totalOrders", orderRepository.count());
+        Map<String, String> statsStr = new HashMap<>();
+        statistics.forEach((k, v) -> statsStr.put(k, v.toString()));
+        stringRedisTemplate.opsForHash().putAll(PLATFORM_STATS_KEY, statsStr);
         return statistics;
     }
 
@@ -407,7 +512,7 @@ public class ItemServiceImpl implements ItemService {
                 .imageUrls(imageUrls)
                 .condition(item.getItemCondition())
                 .status(item.getStatus())
-                .popularity(item.getPopularity())
+                .popularity(Integer.valueOf((int) getItemPopularity(item.getId())))
                 .userId(item.getUser() != null ? item.getUser().getId() : null)
                 .username(item.getUser() != null ? item.getUser().getUsername() : null)
                 .userAvatar(item.getUser() != null ? imageService.generateImageAccessToken(item.getUser().getAvatarImageId()) : null)
@@ -493,5 +598,143 @@ public class ItemServiceImpl implements ItemService {
         }
         itemESRepository.saveAll(docs);
         System.out.println("已同步商品数据到ElasticSearch，数量：" + docs.size());
+    }
+
+    // 获取最热商品（前5）
+    public List<ItemDTO> getHotItems(int topN) {
+        Set<String> hotItemIds = stringRedisTemplate.opsForZSet().reverseRange("hot:items", 0, topN - 1);
+        List<ItemDTO> hotItems = new ArrayList<>();
+        if (hotItemIds == null || hotItemIds.isEmpty()) return hotItems;
+        for (String idStr : hotItemIds) {
+            String cacheKey = "item:detail:" + idStr;
+            String cached = stringRedisTemplate.opsForValue().get(cacheKey);
+            ItemDTO dto = null;
+            if (cached != null) {
+                dto = com.alibaba.fastjson.JSON.parseObject(cached, ItemDTO.class);
+            } else {
+                Long id = Long.valueOf(idStr);
+                Item item = itemRepository.findById(id).orElse(null);
+                if (item != null) {
+                    dto = convertToDTO(item);
+                    stringRedisTemplate.opsForValue().set(cacheKey, com.alibaba.fastjson.JSON.toJSONString(dto), java.time.Duration.ofMinutes(10));
+                }
+            }
+            if (dto != null) hotItems.add(dto);
+        }
+        return hotItems;
+    }
+
+    // 定时任务：每5分钟刷新前5商品详情缓存
+    @Scheduled(cron = "0 */5 * * * ?")
+    public void refreshHotItemDetails() {
+        Set<String> hotItemIds = stringRedisTemplate.opsForZSet().reverseRange("hot:items", 0, 4);
+        if (hotItemIds == null || hotItemIds.isEmpty()) return;
+        for (String idStr : hotItemIds) {
+            Long id = Long.valueOf(idStr);
+            Item item = itemRepository.findById(id).orElse(null);
+            if (item != null) {
+                ItemDTO dto = convertToDTO(item);
+                stringRedisTemplate.opsForValue().set("item:detail:" + idStr, com.alibaba.fastjson.JSON.toJSONString(dto), java.time.Duration.ofMinutes(10));
+            }
+        }
+    }
+
+    // 获取所有物品分类（优先从 Redis）
+    public List<Category> getAllCategoriesFromCache() {
+        String cacheKey = "category:all";
+        String cached = stringRedisTemplate.opsForValue().get(cacheKey);
+        if (cached != null) {
+            return com.alibaba.fastjson.JSON.parseArray(cached, Category.class);
+        }
+        List<Category> categories = categoryRepository.findAll();
+        stringRedisTemplate.opsForValue().set(cacheKey, com.alibaba.fastjson.JSON.toJSONString(categories), java.time.Duration.ofMinutes(30));
+        return categories;
+    }
+
+    // 定时任务：每5分钟刷新分类缓存
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 */5 * * * ?")
+    public void refreshCategoryCache() {
+        List<Category> categories = categoryRepository.findAll();
+        stringRedisTemplate.opsForValue().set("category:all", com.alibaba.fastjson.JSON.toJSONString(categories), java.time.Duration.ofMinutes(30));
+    }
+}
+
+@Component
+class RedisPopularityInitializer implements ApplicationRunner {
+    @Autowired
+    private ItemRepository itemRepository;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+    private static final String ITEM_VIEW_KEY_PREFIX = "item:view:";
+
+    @Override
+    public void run(ApplicationArguments args) {
+        List<Item> items = itemRepository.findAll();
+        for (Item item : items) {
+            String key = ITEM_VIEW_KEY_PREFIX + item.getId();
+            String redisVal = stringRedisTemplate.opsForValue().get(key);
+            int dbVal = item.getPopularity();
+            int redisInt = 0;
+            if (redisVal != null) {
+                try {
+                    redisInt = Integer.parseInt(redisVal);
+                } catch (NumberFormatException ignored) {}
+            }
+            if (dbVal > redisInt) {
+                stringRedisTemplate.opsForValue().set(key, String.valueOf(dbVal));
+            } // 否则保留redis原值
+        }
+    }
+}
+
+@Component
+class ItemPopularitySyncTask {
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+    @Autowired
+    private ItemRepository itemRepository;
+    private static final String ITEM_VIEW_KEY_PREFIX = "item:view:";
+    // 每5分钟执行一次
+    @Scheduled(cron = "0 */5 * * * ?")
+    public void syncPopularityToDb() {
+        Set<String> keys = stringRedisTemplate.keys(ITEM_VIEW_KEY_PREFIX + "*");
+        if (keys == null || keys.isEmpty()) return;
+        for (String key : keys) {
+            String itemIdStr = key.substring(ITEM_VIEW_KEY_PREFIX.length());
+            Long itemId = Long.valueOf(itemIdStr);
+            String value = stringRedisTemplate.opsForValue().get(key);
+            if (value != null) {
+                Long redisPopularity = Long.valueOf(value);
+                itemRepository.findById(itemId).ifPresent(item -> {
+                    int dbPopularity = item.getPopularity();
+                    int newPopularity = Math.max(dbPopularity, redisPopularity.intValue());
+                    item.setPopularity(newPopularity);
+                    itemRepository.save(item);
+                });
+            }
+        }
+    }
+} 
+
+@Component
+class PlatformStatsSyncTask implements ApplicationRunner {
+    @Autowired
+    private ItemRepository itemRepository;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+    private static final String PLATFORM_STATS_KEY = "platform:stats";
+
+    @Override
+    public void run(ApplicationArguments args) {
+        Map<String, String> stats = new HashMap<>();
+        stats.put("totalItems", String.valueOf(itemRepository.countByStatus(1)));
+        stats.put("completedOrders", String.valueOf(itemRepository.countByStatus(3)));
+        stats.put("totalUsers", String.valueOf(userService.getTotalUsers()));
+        stats.put("totalOrders", String.valueOf(orderRepository.count()));
+        stringRedisTemplate.opsForHash().putAll(PLATFORM_STATS_KEY, stats);
     }
 } 

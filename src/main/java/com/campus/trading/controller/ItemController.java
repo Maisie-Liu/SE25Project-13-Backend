@@ -60,10 +60,10 @@ public class ItemController {
      */
     @GetMapping("/{id}")
     public ApiResponse<ItemDTO> getItemById(@PathVariable Long id) {
-        // 先获取物品详情
-        ItemDTO itemDTO = itemService.getItemById(id);
-        // 再增加物品热度
+        // 先自增浏览量
         itemService.incrementItemPopularity(id);
+        // 再获取物品详情（此时popularity为最新值）
+        ItemDTO itemDTO = itemService.getItemById(id);
         return ApiResponse.success(itemDTO);
     }
 
@@ -246,18 +246,13 @@ public class ItemController {
     }
 
     /**
-     * 获取推荐物品列表
-     *
-     * @param pageNum  页码
-     * @param pageSize 每页大小
+     * 获取推荐物品列表（最热商品）
      * @return 推荐物品列表
      */
     @GetMapping("/recommended")
-    public ApiResponse<List<ItemDTO>> getRecommendedItems(
-            @RequestParam(defaultValue = "1") int pageNum,
-            @RequestParam(defaultValue = "10") int pageSize) {
-        List<ItemDTO> recommendedItems = itemService.getRecommendedItems(pageNum, pageSize);
-        return ApiResponse.success(recommendedItems);
+    public ApiResponse<List<ItemDTO>> getRecommendedItems() {
+        List<ItemDTO> hotItems = itemService.getHotItems(5);
+        return ApiResponse.success(hotItems);
     }
 
     /**
@@ -269,5 +264,17 @@ public class ItemController {
     public ApiResponse<Map<String, Long>> getPlatformStatistics() {
         Map<String, Long> statistics = itemService.getPlatformStatistics();
         return ApiResponse.success(statistics);
+    }
+
+    @PostMapping("/view/{itemId}")
+    public ApiResponse<?> incrementPopularity(@PathVariable Long itemId) {
+        itemService.incrementItemPopularity(itemId);
+        return ApiResponse.success(null);
+    }
+
+    @GetMapping("/view/{itemId}")
+    public ApiResponse<Long> getPopularity(@PathVariable Long itemId) {
+        long popularity = itemService.getItemPopularity(itemId);
+        return ApiResponse.success(popularity);
     }
 } 
