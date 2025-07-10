@@ -118,6 +118,11 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
      * 查询分类下上架且有库存的商品
      */
     Page<Item> findByCategoryIdAndStatusAndStockGreaterThan(Long categoryId, Integer status, Integer stock, Pageable pageable);
+    
+    /**
+     * 查询用户发布的所有商品（按创建时间倒序）
+     */
+    List<Item> findByUserOrderByCreateTimeDesc(User user);
 
     /**
      * 根据分类ID列表查询物品列表，并根据状态和热度排序

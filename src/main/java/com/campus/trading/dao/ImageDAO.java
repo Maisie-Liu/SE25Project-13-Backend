@@ -34,6 +34,14 @@ public class ImageDAO {
     }
 
     /**
+     * 获取图片文件大小
+     */
+    public long getImageFileLengthById(String id) {
+        GridFSFile file = getImageFileById(id);
+        return file != null ? file.getLength() : -1;
+    }
+
+    /**
      * 获取图片输入流
      */
     public InputStream getImageStreamById(String id) throws IOException {

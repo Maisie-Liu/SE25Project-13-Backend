@@ -104,6 +104,14 @@ public interface UserService {
      * @param imageId 待更新的图片id
      * */
     void updateImageId(String imageId);
+    
+    /**
+     * 获取用户公开资料
+     *
+     * @param userId 用户ID
+     * @return 用户公开资料
+     */
+    UserDTO getUserPublicProfile(Long userId);
 
     /**
      * 通过Principal获取当前用户实体

@@ -6,6 +6,7 @@ import com.campus.trading.dto.ItemDTO;
 import com.campus.trading.dto.PageResponseDTO;
 import com.campus.trading.entity.User;
 import com.campus.trading.service.ItemService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.campus.trading.service.UserService;
 import com.campus.trading.service.UserViewService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -239,26 +240,14 @@ public class ItemController {
     }
 
     /**
-     * 上传物品图片
-     *
-     * @param file 图片文件
-     * @return 图片URL
-     */
-    @PostMapping("/upload-image")
-    public ApiResponse<String> uploadItemImage(@RequestParam("file") MultipartFile file) {
-        String imageUrl = itemService.uploadItemImage(file);
-        return ApiResponse.success("上传图片成功", imageUrl);
-    }
-
-    /**
      * 根据图片生成物品描述
      *
-     * @param imageUrl 图片URL
+     * @param imageId 图片ID
      * @return 物品描述
      */
     @PostMapping("/generate-description")
-    public ApiResponse<String> generateItemDescription(@RequestParam String imageUrl) {
-        String description = itemService.generateItemDescription(imageUrl);
+    public ApiResponse<String> generateItemDescription(@RequestParam String imageId) throws JsonProcessingException {
+        String description = itemService.generateItemDescription(imageId);
         return ApiResponse.success("生成描述成功", description);
     }
 

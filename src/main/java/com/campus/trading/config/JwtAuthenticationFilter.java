@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -14,6 +15,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * JWT认证过滤器
@@ -27,10 +30,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtUtils jwtUtils;
+    
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    
+    // 定义公开路径列表，不需要token验证
+    private final List<String> publicPaths = Arrays.asList(
+            "/auth/**",
+            "/api/users/**", 
+            "/image/**",
+            "/api/image/**",
+            "/items/public/**",
+            "/items/statistics",
+            "/h2-console/**",
+            "/swagger-ui/**", 
+            "/swagger-resources/**", 
+            "/v3/api-docs/**",
+            "/**/debug/**"
+    );
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+        
+        // 检查是否是公开路径，如果是，直接放行
+        String requestPath = request.getServletPath();
+        
+        // 调试信息
+        logger.info("处理请求: " + requestPath);
+        
+        if (isPublicPath(requestPath)) {
+            logger.info("公开路径，不需要验证: " + requestPath);
+            chain.doFilter(request, response);
+            return;
+        }
 
         final String authHeader = request.getHeader("Authorization");
 
@@ -62,5 +94,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
+    }
+    
+    /**
+     * 检查请求路径是否匹配公开路径列表中的任何一个
+     */
+    private boolean isPublicPath(String requestPath) {
+        for (String pattern : publicPaths) {
+            if (pathMatcher.match(pattern, requestPath)) {
+                return true;
+            }
+        }
+        return false;
     }
 } 
