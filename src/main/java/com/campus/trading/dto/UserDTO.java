@@ -17,8 +17,9 @@ public class UserDTO {
     private Set<String> roles;
     private Integer status;
     private LocalDateTime lastLoginTime;
-    private LocalDateTime createTime;
     private String bio;
+    private String location;
+    private LocalDateTime createTime;
     
     public UserDTO() {
     }
@@ -33,8 +34,9 @@ public class UserDTO {
         this.roles = roles;
         this.status = status;
         this.lastLoginTime = lastLoginTime;
-        this.createTime = createTime;
         this.bio = bio;
+        this.location = location;
+        this.createTime = createTime;
     }
     
     public Long getId() {
@@ -117,20 +119,28 @@ public class UserDTO {
         this.lastLoginTime = lastLoginTime;
     }
     
-    public LocalDateTime getCreateTime() {
-        return createTime;
-    }
-    
-    public void setCreateTime(LocalDateTime createTime) {
-        this.createTime = createTime;
-    }
-    
     public String getBio() {
         return bio;
     }
     
     public void setBio(String bio) {
         this.bio = bio;
+    }
+    
+    public String getLocation() {
+        return location;
+    }
+    
+    public void setLocation(String location) {
+        this.location = location;
+    }
+    
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
+    
+    public void setCreateTime(LocalDateTime createTime) {
+        this.createTime = createTime;
     }
     
     public static Builder builder() {
@@ -185,13 +195,18 @@ public class UserDTO {
             return this;
         }
         
-        public Builder createTime(LocalDateTime createTime) {
-            dto.setCreateTime(createTime);
+        public Builder bio(String bio) {
+            dto.setBio(bio);
             return this;
         }
         
-        public Builder bio(String bio) {
-            dto.setBio(bio);
+        public Builder location(String location) {
+            dto.setLocation(location);
+            return this;
+        }
+        
+        public Builder createTime(LocalDateTime createTime) {
+            dto.setCreateTime(createTime);
             return this;
         }
         
