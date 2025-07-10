@@ -3,6 +3,7 @@ package com.campus.trading.service;
 import com.campus.trading.dto.ItemCreateRequestDTO;
 import com.campus.trading.dto.ItemDTO;
 import com.campus.trading.dto.PageResponseDTO;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
@@ -114,20 +115,12 @@ public interface ItemService {
                                         int pageNum, int pageSize, String sort, String order);
 
     /**
-     * 上传物品图片
-     *
-     * @param file 图片文件
-     * @return 图片URL
-     */
-    String uploadItemImage(MultipartFile file);
-
-    /**
      * 根据图片生成物品描述
      *
      * @param imageUrl 图片URL
      * @return 物品描述
      */
-    String generateItemDescription(String imageUrl);
+    String generateItemDescription(String imageUrl) throws JsonProcessingException;
 
     /**
      * 获取推荐物品列表

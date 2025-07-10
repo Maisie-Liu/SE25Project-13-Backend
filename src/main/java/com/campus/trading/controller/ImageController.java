@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -41,9 +43,13 @@ public class ImageController {
      */
     @PostMapping("/upload")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) throws IOException {
         String imageId = imageService.uploadImage(file);
-        return ResponseEntity.ok(imageId);
+        String url = imageService.generateImageAccessToken(imageId);
+        Map<String, String> result = new HashMap<>();
+        result.put("imageId", imageId);
+        result.put("url", url);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -51,10 +57,14 @@ public class ImageController {
      */
     @PostMapping("/upload-avatar")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<String> uploadAvatarImage(@RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<Map<String, String>> uploadAvatarImage(@RequestParam("file") MultipartFile file) throws IOException {
         String imageId = imageService.uploadImage(file);
         userService.updateImageId(imageId);
-        return ResponseEntity.ok(imageId);
+        String url = imageService.generateImageAccessToken(imageId);
+        Map<String, String> result = new HashMap<>();
+        result.put("imageId", imageId);
+        result.put("url", url);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -108,10 +118,15 @@ public class ImageController {
             log.error("Image not found in GridFS, id={}", id);
             return ResponseEntity.notFound().build();
         }
-        
+        long contentLength = imageService.getImageFileLength(id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"image_" + id + "\"");
+        headers.setContentType(MediaType.IMAGE_JPEG);
+        if (contentLength > 0) {
+            headers.setContentLength(contentLength);
+        }
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"image_" + id + "\"")
-                .contentType(MediaType.IMAGE_JPEG)
+                .headers(headers)
                 .body(new InputStreamResource(inputStream));
     }
 
