@@ -3,6 +3,9 @@ package com.campus.trading.service;
 import com.campus.trading.dto.ItemDTO;
 import com.campus.trading.dto.PageResponseDTO;
 import com.campus.trading.entity.Favorite;
+import com.campus.trading.entity.User;
+
+import java.security.Principal;
 
 /**
  * 收藏服务接口
@@ -44,4 +47,6 @@ public interface FavoriteService {
      * @return 收藏信息，如果未收藏则返回null
      */
     ItemDTO checkFavoriteStatus(Long itemId);
-} 
+
+    User getCurrentUser(Principal principal);
+}

@@ -4,6 +4,7 @@ import com.campus.trading.dto.ItemCreateRequestDTO;
 import com.campus.trading.dto.ItemDTO;
 import com.campus.trading.dto.PageResponseDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.campus.trading.entity.Item;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
@@ -157,4 +158,11 @@ public interface ItemService {
      * @return 物品列表
      */
     List<Object> getItemsByUserId(Long userId);
+
+    /**
+     * 获取物品实体
+     * @param id 物品ID
+     * @return 物品实体
+     */
+    Item getItemEntityById(Long id);
 } 

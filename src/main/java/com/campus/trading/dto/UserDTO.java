@@ -20,6 +20,7 @@ public class UserDTO {
     private String bio;
     private String location;
     private LocalDateTime createTime;
+    private Boolean allowPersonalizedRecommend;
     
     public UserDTO() {
     }
@@ -143,6 +144,14 @@ public class UserDTO {
         this.createTime = createTime;
     }
     
+    public Boolean getAllowPersonalizedRecommend() {
+        return allowPersonalizedRecommend;
+    }
+    
+    public void setAllowPersonalizedRecommend(Boolean allowPersonalizedRecommend) {
+        this.allowPersonalizedRecommend = allowPersonalizedRecommend;
+    }
+    
     public static Builder builder() {
         return new Builder();
     }
@@ -207,6 +216,11 @@ public class UserDTO {
         
         public Builder createTime(LocalDateTime createTime) {
             dto.setCreateTime(createTime);
+            return this;
+        }
+        
+        public Builder allowPersonalizedRecommend(Boolean allowPersonalizedRecommend) {
+            dto.setAllowPersonalizedRecommend(allowPersonalizedRecommend);
             return this;
         }
         

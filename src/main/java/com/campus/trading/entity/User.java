@@ -99,6 +99,12 @@ public class User {
      */
     @LastModifiedDate
     private LocalDateTime updateTime;
+
+    /**
+     * 是否允许个性化推荐和数据采集
+     */
+    @Column(nullable = false)
+    private boolean allowPersonalizedRecommend = true;
     
     public User() {
     }
@@ -215,6 +221,14 @@ public class User {
         this.updateTime = updateTime;
     }
     
+    public boolean isAllowPersonalizedRecommend() {
+        return allowPersonalizedRecommend;
+    }
+    
+    public void setAllowPersonalizedRecommend(boolean allowPersonalizedRecommend) {
+        this.allowPersonalizedRecommend = allowPersonalizedRecommend;
+    }
+    
     public static Builder builder() {
         return new Builder();
     }
@@ -289,6 +303,11 @@ public class User {
         
         public Builder updateTime(LocalDateTime updateTime) {
             user.setUpdateTime(updateTime);
+            return this;
+        }
+        
+        public Builder allowPersonalizedRecommend(boolean allowPersonalizedRecommend) {
+            user.setAllowPersonalizedRecommend(allowPersonalizedRecommend);
             return this;
         }
         

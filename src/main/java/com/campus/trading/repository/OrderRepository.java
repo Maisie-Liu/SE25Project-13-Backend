@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -79,4 +80,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @return 订单分页列表
      */
     Page<Order> findBySellerAndStatus(User seller, Integer status, Pageable pageable);
+
+    /**
+     * 根据买家查询订单列表
+     *
+     * @param user 买家
+     * @return 订单列表
+     */
+    List<Order> findByBuyer(User user);
 } 

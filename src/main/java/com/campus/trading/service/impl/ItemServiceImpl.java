@@ -548,4 +548,9 @@ public class ItemServiceImpl implements ItemService {
             return "AI生成描述失败";
         }
     }
+
+    @Override
+    public Item getItemEntityById(Long id) {
+        return itemRepository.findById(id).orElseThrow(() -> new RuntimeException("物品不存在: ID=" + id));
+    }
 } 
