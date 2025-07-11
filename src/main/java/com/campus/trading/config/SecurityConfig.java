@@ -46,10 +46,9 @@ public class SecurityConfig {
             .antMatchers("/users/**").permitAll()
             .antMatchers("/api/users/debug/access").permitAll()
             .antMatchers("/users/debug/access").permitAll()
-            // 明确设置所有图片相关接口为公开接口
-            .antMatchers("/image/**").permitAll()
-            .antMatchers("/api/image/**").permitAll()
-            .antMatchers("/image/debug/status").permitAll()
+            // 移除图片下载接口的permitAll配置，让它需要认证
+            // .antMatchers("/image/{id}").permitAll()
+            .antMatchers("/image/debug/**").permitAll()
             // 其他公开接口
             .antMatchers("/auth/login").permitAll()
             .antMatchers("/auth/register").permitAll()

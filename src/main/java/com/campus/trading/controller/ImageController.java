@@ -103,11 +103,12 @@ public class ImageController {
         }
         
         try {
-            String subject = jwtUtils.getUsernameFromToken(token);
-            if (!id.equals(subject)) {
-                log.error("Invalid token for image: {}", id);
+            // 使用专门的图片token验证方法
+            if (!jwtUtils.validateImageToken(token, id)) {
+                log.error("Invalid image token for image: {}", id);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
+            log.info("图片token验证成功，继续处理图片下载: {}", id);
         } catch (Exception e) {
             log.error("Token校验失败 for image: {}", id, e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -118,6 +119,7 @@ public class ImageController {
             log.error("Image not found in GridFS, id={}", id);
             return ResponseEntity.notFound().build();
         }
+        log.info("成功获取图片流，准备返回图片: {}", id);
         long contentLength = imageService.getImageFileLength(id);
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"image_" + id + "\"");
@@ -125,6 +127,7 @@ public class ImageController {
         if (contentLength > 0) {
             headers.setContentLength(contentLength);
         }
+        log.info("图片下载响应准备完成，contentLength: {}", contentLength);
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(new InputStreamResource(inputStream));

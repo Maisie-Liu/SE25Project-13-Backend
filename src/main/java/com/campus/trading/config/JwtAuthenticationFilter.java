@@ -44,8 +44,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/auth/check-phone-code",
             "/auth/check-email-code-by-phone",
             "/api/users/**", 
-            "/image/**",
-            "/api/image/**",
+            // 移除图片下载接口的公开路径配置
+            // "/image/{id}",  // 只放行 /image/{id} 格式的路径
+            "/image/debug/**",
             "/items/public/**",
             "/items/statistics",
             "/h2-console/**",
@@ -69,6 +70,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             logger.info("公开路径，不需要验证: " + requestPath);
             chain.doFilter(request, response);
             return;
+        }
+
+        // 特殊处理图片访问：从URL参数中提取token
+        // 由于context-path是/api，实际请求路径是/api/image/{id}
+        if (requestPath.startsWith("/image/") && !requestPath.startsWith("/image/debug/")) {
+            String token = request.getParameter("token");
+            logger.info("检测到图片访问请求: " + requestPath + ", token: " + (token != null ? "存在" : "不存在"));
+            if (token != null && !token.isEmpty()) {
+                try {
+                    String imageId = extractImageIdFromPath(requestPath);
+                    logger.info("提取的图片ID: " + imageId);
+                    if (imageId != null && jwtUtils.validateImageToken(token, imageId)) {
+                        logger.info("图片访问token验证成功: " + imageId);
+                        
+                        // 为图片访问设置一个临时的认证上下文
+                        // 创建一个简单的认证对象，表示这是一个有效的图片访问
+                        UsernamePasswordAuthenticationToken imageAuth = new UsernamePasswordAuthenticationToken(
+                            "image_access", null, Arrays.asList());
+                        imageAuth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(imageAuth);
+                        
+                        chain.doFilter(request, response);
+                        return;
+                    } else {
+                        logger.warn("图片token验证失败: imageId=" + imageId + ", token=" + token);
+                    }
+                } catch (Exception e) {
+                    logger.error("图片访问token验证失败", e);
+                }
+            } else {
+                logger.warn("图片访问请求缺少token: " + requestPath);
+            }
         }
 
         final String authHeader = request.getHeader("Authorization");
@@ -113,5 +146,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         return false;
+    }
+    
+    /**
+     * 从请求路径中提取图片ID
+     */
+    private String extractImageIdFromPath(String requestPath) {
+        // 处理实际路径格式 /image/id
+        // 由于context-path是/api，实际请求路径是/api/image/id，但requestPath是/image/id
+        if (requestPath.startsWith("/image/")) {
+            String[] parts = requestPath.split("/");
+            if (parts.length >= 3) {
+                return parts[2]; // /image/id 中的 id
+            }
+        }
+        return null;
     }
 } 

@@ -413,6 +413,7 @@ public class ItemServiceImpl implements ItemService {
                 .status(item.getStatus())
                 .userId(item.getUser().getId())
                 .username(item.getUser().getUsername())
+                .userAvatar(item.getUser().getAvatarImageId() != null ? imageService.generateImageAccessToken(item.getUser().getAvatarImageId()) : null)
                 .createTime(item.getCreateTime())
                 .popularity(item.getPopularity())
                 .stock(item.getStock())
@@ -519,7 +520,7 @@ public class ItemServiceImpl implements ItemService {
                     .role(Role.USER.getValue())
                     .content(Arrays.asList(
                             Collections.singletonMap("image", imageUrl),
-                            Collections.singletonMap("text", "请识别图片中的商品，并仿照闲鱼发帖风格，生成一段简洁吸引人的、发布于于大学校园二手物品交易平台的商品描述，避免使用markdown进行格式渲染。")
+                            Collections.singletonMap("text", "请识别图片中的商品，并仿照闲鱼发帖风格，生成一段简洁吸引人的、发布于于大学校园二手物品交易平台的商品描述，避免使用markdown进行格式渲染，使用utf-8字符集纯文字，避免使用emoji。")
                     ))
                     .build();
             MultiModalConversationParam param = MultiModalConversationParam.builder()

@@ -136,4 +136,23 @@ public class JwtUtils {
         claims.put("imageId", imageId);
         return doGenerateToken(claims, imageId);
     }
+
+    /**
+     * 验证图片访问Token
+     * @param token 图片访问token
+     * @param imageId 图片id
+     * @return 是否有效
+     */
+    public Boolean validateImageToken(String token, String imageId) {
+        try {
+            Claims claims = getAllClaimsFromToken(token);
+            String tokenImageId = claims.get("imageId", String.class);
+            String subject = claims.getSubject();
+            
+            // 验证图片ID和主题是否匹配
+            return imageId.equals(tokenImageId) && imageId.equals(subject) && !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
 } 
