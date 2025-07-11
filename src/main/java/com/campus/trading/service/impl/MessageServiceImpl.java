@@ -6,6 +6,7 @@ import com.campus.trading.repository.CommentRepository;
 import com.campus.trading.repository.ItemRepository;
 import com.campus.trading.repository.MessageRepository;
 import com.campus.trading.repository.UserRepository;
+import com.campus.trading.service.ImageService;
 import com.campus.trading.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,16 +25,19 @@ public class MessageServiceImpl implements MessageService {
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
     private final CommentRepository commentRepository;
+    private final ImageService imageService;
 
     @Autowired
     public MessageServiceImpl(MessageRepository messageRepository, 
                              UserRepository userRepository,
                              ItemRepository itemRepository,
-                             CommentRepository commentRepository) {
+                             CommentRepository commentRepository,
+                             ImageService imageService) {
         this.messageRepository = messageRepository;
         this.userRepository = userRepository;
         this.itemRepository = itemRepository;
         this.commentRepository = commentRepository;
+        this.imageService = imageService;
     }
 
     @Override
@@ -370,7 +374,7 @@ public class MessageServiceImpl implements MessageService {
             UserDTO senderDTO = new UserDTO();
             senderDTO.setId(message.getSender().getId());
             senderDTO.setUsername(message.getSender().getUsername());
-            senderDTO.setAvatarUrl(message.getSender().getAvatarImageId());
+            senderDTO.setAvatarUrl(imageService.generateImageAccessToken(message.getSender().getAvatarImageId()));
             dto.setSender(senderDTO);
         }
         
@@ -388,7 +392,7 @@ public class MessageServiceImpl implements MessageService {
             UserDTO senderDTO = new UserDTO();
             senderDTO.setId(message.getSender().getId());
             senderDTO.setUsername(message.getSender().getUsername());
-            senderDTO.setAvatarUrl(message.getSender().getAvatarImageId());
+            senderDTO.setAvatarUrl(imageService.generateImageAccessToken(message.getSender().getAvatarImageId()));
             dto.setSender(senderDTO);
         }
         
@@ -396,8 +400,10 @@ public class MessageServiceImpl implements MessageService {
             dto.setItemId(message.getItem().getId());
             dto.setItemName(message.getItem().getName());
             // 获取物品的第一张图片作为缩略图
-            if (!message.getItem().getImageIds().isEmpty()) {
-                dto.setItemImage(message.getItem().getImageIds().get(0));
+            if (message.getItem().getImageIds() != null && !message.getItem().getImageIds().isEmpty()) {
+                String imageId = message.getItem().getImageIds().get(0);
+                String imageUrl = imageService.generateImageAccessToken(imageId);
+                dto.setItemImage(imageUrl);
             }
             dto.setItemPrice(message.getItem().getPrice().doubleValue());
         }
@@ -421,7 +427,7 @@ public class MessageServiceImpl implements MessageService {
                 UserDTO senderDTO = new UserDTO();
                 senderDTO.setId(message.getSender().getId());
                 senderDTO.setUsername(message.getSender().getUsername());
-                senderDTO.setAvatarUrl(message.getSender().getAvatarImageId());
+                senderDTO.setAvatarUrl(imageService.generateImageAccessToken(message.getSender().getAvatarImageId()));
                 dto.setSender(senderDTO);
             } else {
                 System.out.println("警告: 消息 " + message.getId() + " 的发送者为空");
@@ -432,7 +438,9 @@ public class MessageServiceImpl implements MessageService {
                 dto.setItemName(message.getItem().getName());
                 // 获取物品的第一张图片作为缩略图
                 if (message.getItem().getImageIds() != null && !message.getItem().getImageIds().isEmpty()) {
-                    dto.setItemImage(message.getItem().getImageIds().get(0));
+                    String imageId = message.getItem().getImageIds().get(0);
+                    String imageUrl = imageService.generateImageAccessToken(imageId);
+                    dto.setItemImage(imageUrl);
                 }
                 if (message.getItem().getPrice() != null) {
                     dto.setItemPrice(message.getItem().getPrice().doubleValue());
@@ -459,7 +467,7 @@ public class MessageServiceImpl implements MessageService {
             UserDTO senderDTO = new UserDTO();
             senderDTO.setId(message.getSender().getId());
             senderDTO.setUsername(message.getSender().getUsername());
-            senderDTO.setAvatarUrl(message.getSender().getAvatarImageId());
+            senderDTO.setAvatarUrl(imageService.generateImageAccessToken(message.getSender().getAvatarImageId()));
             dto.setSender(senderDTO);
         }
         
@@ -472,7 +480,9 @@ public class MessageServiceImpl implements MessageService {
                 dto.setItemName(message.getOrder().getItem().getName());
                 // 获取物品的第一张图片作为缩略图
                 if (!message.getOrder().getItem().getImageIds().isEmpty()) {
-                    dto.setItemImage(message.getOrder().getItem().getImageIds().get(0));
+                    String imageId = message.getOrder().getItem().getImageIds().get(0);
+                    String imageUrl = imageService.generateImageAccessToken(imageId);
+                    dto.setItemImage(imageUrl);
                 }
                 dto.setPrice(message.getOrder().getAmount().doubleValue());
             }
@@ -522,7 +532,7 @@ public class MessageServiceImpl implements MessageService {
             UserDTO senderDTO = new UserDTO();
             senderDTO.setId(message.getSender().getId());
             senderDTO.setUsername(message.getSender().getUsername());
-            senderDTO.setAvatarUrl(message.getSender().getAvatarImageId());
+            senderDTO.setAvatarUrl(imageService.generateImageAccessToken(message.getSender().getAvatarImageId()));
             dto.setSender(senderDTO);
         }
         
@@ -534,7 +544,9 @@ public class MessageServiceImpl implements MessageService {
             dto.setItemName(message.getItem().getName());
             // 获取物品的第一张图片作为缩略图
             if (!message.getItem().getImageIds().isEmpty()) {
-                dto.setItemImage(message.getItem().getImageIds().get(0));
+                String imageId = message.getItem().getImageIds().get(0);
+                String imageUrl = imageService.generateImageAccessToken(imageId);
+                dto.setItemImage(imageUrl);
             }
             dto.setItemPrice(message.getItem().getPrice().doubleValue());
         }

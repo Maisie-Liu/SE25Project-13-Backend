@@ -124,4 +124,19 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
            countQuery = "SELECT COUNT(DISTINCT i.id) FROM t_item i WHERE i.status = 1 AND i.stock > 0",
            nativeQuery = true)
     Page<Item> findAllOrderByFavoriteCountDesc(Pageable pageable);
+    
+    /**
+     * 查询用户发布的所有商品（按创建时间倒序）
+     */
+    List<Item> findByUserOrderByCreateTimeDesc(User user);
+
+    /**
+     * 根据分类ID列表查询物品列表，并根据状态和热度排序
+     *
+     * @param categoryIds 分类ID列表
+     * @param status      状态
+     * @param pageable    分页参数
+     * @return 物品分页列表
+     */
+    Page<Item> findByCategoryIdInAndStatusOrderByPopularityDesc(List<Long> categoryIds, Integer status, Pageable pageable);
 } 

@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -23,6 +24,7 @@ import java.util.Arrays;
  */
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     @Autowired
@@ -39,14 +41,38 @@ public class SecurityConfig {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .authorizeRequests()
-            // 公开接口，不需要认证
-            .antMatchers("/auth/**", "/items/public/**", "/items/statistics", "/h2-console/**").permitAll()
+            // 明确设置所有用户相关接口为公开接口
+            .antMatchers("/api/users/**").permitAll()
+            .antMatchers("/users/**").permitAll()
+            .antMatchers("/api/users/debug/access").permitAll()
+            .antMatchers("/users/debug/access").permitAll()
+            // 移除图片下载接口的permitAll配置，让它需要认证
+            // .antMatchers("/image/{id}").permitAll()
+            .antMatchers("/image/debug/**").permitAll()
+            // 其他公开接口
+            .antMatchers("/auth/login").permitAll()
+            .antMatchers("/auth/register").permitAll()
+            .antMatchers("/auth/check-username").permitAll()
+            .antMatchers("/auth/check-email").permitAll()
+            .antMatchers("/auth/check-phone").permitAll()
+            .antMatchers("/auth/check-email-code").permitAll()
+            .antMatchers("/auth/check-phone-code").permitAll()
+            .antMatchers("/items/public/**").permitAll()
+            .antMatchers("/items/statistics").permitAll()
+            .antMatchers("/h2-console/**").permitAll()
             // Swagger UI相关接口
             .antMatchers("/swagger-ui/**", "/swagger-resources/**", "/v3/api-docs/**").permitAll()
-            // 允许匿名访问图片接口
-            .antMatchers("/image/**").permitAll()
+            // 测试和调试接口
+            .antMatchers("/**/debug/**").permitAll()
             // 其他所有请求需要认证
-            .anyRequest().authenticated();
+            .anyRequest().authenticated()
+            .and()
+            .exceptionHandling()
+            .authenticationEntryPoint((request, response, authException) -> {
+                response.setContentType("application/json;charset=UTF-8");
+                response.setStatus(403);
+                response.getWriter().write("{\"code\":403,\"message\":\"访问被拒绝，请先登录\"}");
+            });
             
         // 允许H2控制台的frame显示
         http.headers().frameOptions().disable();
@@ -79,10 +105,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:8080"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
+        configuration.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

@@ -4,11 +4,13 @@ import com.campus.trading.dto.ApiResponse;
 import com.campus.trading.dto.ItemDTO;
 import com.campus.trading.dto.PageResponseDTO;
 import com.campus.trading.service.FavoriteService;
+import com.campus.trading.service.UserProfileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.Map;
 
 /**
@@ -21,10 +23,12 @@ public class FavoriteController {
 
     private static final Logger logger = LoggerFactory.getLogger(FavoriteController.class);
     private final FavoriteService favoriteService;
+    private final UserProfileService userProfileService;
 
     @Autowired
-    public FavoriteController(FavoriteService favoriteService) {
+    public FavoriteController(FavoriteService favoriteService, UserProfileService userProfileService) {
         this.favoriteService = favoriteService;
+        this.userProfileService = userProfileService;
     }
 
     /**
@@ -56,7 +60,7 @@ public class FavoriteController {
      * @return 收藏结果
      */
     @PostMapping
-    public ApiResponse<ItemDTO> addFavorite(@RequestBody Map<String, Long> request) {
+    public ApiResponse<ItemDTO> addFavorite(@RequestBody Map<String, Long> request, Principal principal) {
         Long itemId = request.get("itemId");
         logger.info("添加收藏请求: itemId={}", itemId);
         if (itemId == null) {
@@ -64,6 +68,10 @@ public class FavoriteController {
         }
         try {
             ItemDTO item = favoriteService.addFavorite(itemId);
+            // 自动更新用户画像
+            if (principal != null) {
+                userProfileService.updateProfile(favoriteService.getCurrentUser(principal));
+            }
             logger.info("添加收藏成功: itemId={}", itemId);
             return ApiResponse.success("收藏成功", item);
         } catch (Exception e) {
@@ -79,10 +87,14 @@ public class FavoriteController {
      * @return 取消结果
      */
     @DeleteMapping("/{id}")
-    public ApiResponse<Boolean> removeFavorite(@PathVariable Long id) {
+    public ApiResponse<Boolean> removeFavorite(@PathVariable Long id, Principal principal) {
         logger.info("取消收藏请求: id={}", id);
         try {
             boolean success = favoriteService.removeFavorite(id);
+            // 自动更新用户画像
+            if (principal != null) {
+                userProfileService.updateProfile(favoriteService.getCurrentUser(principal));
+            }
             logger.info("取消收藏成功: id={}", id);
             return ApiResponse.success("取消收藏成功", success);
         } catch (Exception e) {
@@ -98,10 +110,14 @@ public class FavoriteController {
      * @return 取消结果
      */
     @DeleteMapping("/item/{itemId}")
-    public ApiResponse<Boolean> removeFavoriteByItemId(@PathVariable Long itemId) {
+    public ApiResponse<Boolean> removeFavoriteByItemId(@PathVariable Long itemId, Principal principal) {
         logger.info("根据物品ID取消收藏请求: itemId={}", itemId);
         try {
             boolean success = favoriteService.removeFavoriteByItemId(itemId);
+            // 自动更新用户画像
+            if (principal != null) {
+                userProfileService.updateProfile(favoriteService.getCurrentUser(principal));
+            }
             logger.info("根据物品ID取消收藏成功: itemId={}", itemId);
             return ApiResponse.success("取消收藏成功", success);
         } catch (Exception e) {

@@ -12,6 +12,7 @@ import com.campus.trading.service.FavoriteService;
 import com.campus.trading.service.MessageService;
 import com.campus.trading.service.ItemService;
 import com.campus.trading.service.UserService;
+import com.campus.trading.service.UserProfileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
+import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,15 +37,17 @@ public class FavoriteServiceImpl implements FavoriteService {
     private final UserService userService;
     private final MessageService messageService;
     private final ItemService itemService;
+    private final UserProfileService userProfileService;
 
     @Autowired
     public FavoriteServiceImpl(FavoriteRepository favoriteRepository, ItemRepository itemRepository, 
-                              UserService userService, MessageService messageService, ItemService itemService) {
+                              UserService userService, MessageService messageService, ItemService itemService, UserProfileService userProfileService) {
         this.favoriteRepository = favoriteRepository;
         this.itemRepository = itemRepository;
         this.userService = userService;
         this.messageService = messageService;
         this.itemService = itemService;
+        this.userProfileService = userProfileService;
     }
 
     @Override
@@ -101,6 +105,11 @@ public class FavoriteServiceImpl implements FavoriteService {
                 logger.info("用户收藏了自己的物品，不创建消息通知");
             }
             
+            // 添加收藏后自动更新用户画像（如有需要）
+            if (currentUser.isAllowPersonalizedRecommend()) {
+                userProfileService.updateProfile(currentUser);
+            }
+            
             // 转换为DTO返回
             ItemDTO itemDTO = convertItemToDTO(item);
             itemDTO.setFavoriteId(savedFavorite.getId());
@@ -138,6 +147,11 @@ public class FavoriteServiceImpl implements FavoriteService {
             // 删除收藏
             favoriteRepository.delete(favorite);
             logger.info("取消收藏成功: favoriteId={}", favoriteId);
+            
+            // 取消收藏后自动更新用户画像（如有需要）
+            if (currentUser.isAllowPersonalizedRecommend()) {
+                userProfileService.updateProfile(currentUser);
+            }
             
             return true;
         } catch (Exception e) {
@@ -178,6 +192,11 @@ public class FavoriteServiceImpl implements FavoriteService {
             // 删除收藏
             favoriteRepository.delete(favorite);
             logger.info("根据物品ID取消收藏成功: itemId={}, favoriteId={}", itemId, favorite.getId());
+            
+            // 取消收藏后自动更新用户画像（如有需要）
+            if (currentUser.isAllowPersonalizedRecommend()) {
+                userProfileService.updateProfile(currentUser);
+            }
             
             return true;
         } catch (Exception e) {
@@ -288,5 +307,11 @@ public class FavoriteServiceImpl implements FavoriteService {
                 .build();
         logger.debug("Item转换为DTO: itemId={}, name={}", item.getId(), item.getName());
         return dto;
+    }
+
+    @Override
+    public User getCurrentUser(Principal principal) {
+        if (principal == null) throw new RuntimeException("未登录");
+        return userService.findByUsername(principal.getName());
     }
 } 

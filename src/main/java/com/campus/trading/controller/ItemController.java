@@ -4,12 +4,18 @@ import com.campus.trading.dto.ApiResponse;
 import com.campus.trading.dto.ItemCreateRequestDTO;
 import com.campus.trading.dto.ItemDTO;
 import com.campus.trading.dto.PageResponseDTO;
+import com.campus.trading.entity.User;
 import com.campus.trading.service.ItemService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.campus.trading.service.UserService;
+import com.campus.trading.service.UserViewService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
@@ -22,9 +28,14 @@ import java.util.Map;
 public class ItemController {
 
     private final ItemService itemService;
-    
-    public ItemController(ItemService itemService) {
+    private final UserViewService userViewService;
+    private final UserService userService;
+
+    @Autowired
+    public ItemController(ItemService itemService, UserViewService userViewService, UserService userService) {
         this.itemService = itemService;
+        this.userViewService = userViewService;
+        this.userService = userService;
     }
 
     /**
@@ -64,6 +75,15 @@ public class ItemController {
         itemService.incrementItemPopularity(id);
         // 再获取物品详情（此时popularity为最新值）
         ItemDTO itemDTO = itemService.getItemById(id);
+        // 再增加物品热度
+        // itemService.incrementItemPopularity(id);
+        // 自动记录浏览行为
+        if (principal != null) {
+            User user = userService.getCurrentUser(principal);
+            if (user.isAllowPersonalizedRecommend()) {
+                userViewService.recordView(user, itemService.getItemEntityById(id));
+            }
+        }
         return ApiResponse.success(itemDTO);
     }
 
@@ -222,26 +242,14 @@ public class ItemController {
     }
 
     /**
-     * 上传物品图片
-     *
-     * @param file 图片文件
-     * @return 图片URL
-     */
-    @PostMapping("/upload-image")
-    public ApiResponse<String> uploadItemImage(@RequestParam("file") MultipartFile file) {
-        String imageUrl = itemService.uploadItemImage(file);
-        return ApiResponse.success("上传图片成功", imageUrl);
-    }
-
-    /**
      * 根据图片生成物品描述
      *
-     * @param imageUrl 图片URL
+     * @param imageId 图片ID
      * @return 物品描述
      */
     @PostMapping("/generate-description")
-    public ApiResponse<String> generateItemDescription(@RequestParam String imageUrl) {
-        String description = itemService.generateItemDescription(imageUrl);
+    public ApiResponse<String> generateItemDescription(@RequestParam String imageId) throws JsonProcessingException {
+        String description = itemService.generateItemDescription(imageId);
         return ApiResponse.success("生成描述成功", description);
     }
 

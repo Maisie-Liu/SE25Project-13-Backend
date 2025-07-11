@@ -9,6 +9,7 @@ import com.campus.trading.repository.ItemRepository;
 import com.campus.trading.repository.OrderRepository;
 import com.campus.trading.service.ItemService;
 import com.campus.trading.service.OrderService;
+import com.campus.trading.service.UserProfileService;
 import com.campus.trading.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -34,13 +35,15 @@ public class OrderServiceImpl implements OrderService {
     private final ItemRepository itemRepository;
     private final UserService userService;
     private final ItemService itemService;
+    private final UserProfileService userProfileService;
 
     @Autowired
-    public OrderServiceImpl(OrderRepository orderRepository, ItemRepository itemRepository, UserService userService, ItemService itemService) {
+    public OrderServiceImpl(OrderRepository orderRepository, ItemRepository itemRepository, UserService userService, ItemService itemService, UserProfileService userProfileService) {
         this.orderRepository = orderRepository;
         this.itemRepository = itemRepository;
         this.userService = userService;
         this.itemService = itemService;
+        this.userProfileService = userProfileService;
     }
 
     @Override
@@ -93,7 +96,12 @@ public class OrderServiceImpl implements OrderService {
         }
         
         // 转换为DTO返回
-        return convertToDTO(savedOrder);
+        OrderDTO dto = convertToDTO(savedOrder);
+        // 下单后自动更新用户画像
+        if (currentUser.isAllowPersonalizedRecommend()) {
+            userProfileService.updateProfile(currentUser);
+        }
+        return dto;
     }
 
     @Override
@@ -201,7 +209,12 @@ public class OrderServiceImpl implements OrderService {
         Order updatedOrder = orderRepository.save(order);
         
         // 转换为DTO返回
-        return convertToDTO(updatedOrder);
+        OrderDTO dto = convertToDTO(updatedOrder);
+        // 完成订单后自动更新用户画像
+        if (order.getBuyer().isAllowPersonalizedRecommend()) {
+            userProfileService.updateProfile(order.getBuyer());
+        }
+        return dto;
     }
 
     @Override

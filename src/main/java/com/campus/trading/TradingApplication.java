@@ -1,5 +1,6 @@
 package com.campus.trading;
 
+import com.campus.trading.config.Qwen3Properties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
@@ -8,6 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import com.campus.trading.service.impl.ItemServiceImpl;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 /**
  * 校园二手交易平台启动类
@@ -16,6 +18,7 @@ import com.campus.trading.service.impl.ItemServiceImpl;
 @EnableJpaAuditing
 @EnableAsync
 @EnableScheduling
+@EnableConfigurationProperties({Qwen3Properties.class})
 public class TradingApplication {
 
     public static void main(String[] args) {
