@@ -18,7 +18,7 @@ public class ItemDTO {
     private List<String> images;
     private List<String> imageIds;
     private Integer condition;
-    private Integer status;
+    private Integer status; // 物品状态：0-下架，1-上架，2-已售出，删除已禁用，仅允许下架
     private Integer popularity;
     private Long userId;
     private String username;

@@ -14,6 +14,8 @@ import java.util.List;
 
 /**
  * 物品数据访问接口
+ *
+ * 删除功能已禁用，仅允许下架
  */
 @Repository
 public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificationExecutor<Item> {
