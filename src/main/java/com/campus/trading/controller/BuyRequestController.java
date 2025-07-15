@@ -20,11 +20,22 @@ public class BuyRequestController {
     @GetMapping
     public ApiResponse<PageResponseDTO<BuyRequestDTO>> list(
             @RequestParam(defaultValue = "") String keyword,
-            @RequestParam(defaultValue = "") Long categoryId,
+            @RequestParam(required = false) Long categoryId,
             @RequestParam(defaultValue = "0") int pageNum,
-            @RequestParam(defaultValue = "10") int pageSize
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "latest") String sort // 新增
     ) {
-        Pageable pageable = PageRequest.of(pageNum, pageSize);
+        Pageable pageable;
+        switch (sort) {
+            case "price_low":
+                pageable = PageRequest.of(pageNum, pageSize, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "expectedPrice"));
+                break;
+            case "price_high":
+                pageable = PageRequest.of(pageNum, pageSize, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "expectedPrice"));
+                break;
+            default:
+                pageable = PageRequest.of(pageNum, pageSize, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "updateTime"));
+        }
         PageResponseDTO<BuyRequestDTO> page = buyRequestService.pageList(keyword, categoryId, pageable);
         return ApiResponse.success(page);
     }
