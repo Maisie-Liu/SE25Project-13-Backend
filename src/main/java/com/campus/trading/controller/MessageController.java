@@ -4,6 +4,7 @@ import com.campus.trading.dto.*;
 import com.campus.trading.service.MessageService;
 import com.campus.trading.entity.User;
 import com.campus.trading.repository.UserRepository;
+import com.campus.trading.config.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,14 +27,6 @@ public class MessageController {
         this.userRepository = userRepository;
     }
 
-    // 工具方法：通过认证对象获取用户ID
-    private Long getUserIdFromAuthentication(Authentication authentication) {
-        String username = authentication.getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
-        return user.getId();
-    }
-
     /**
      * 获取用户所有消息
      */
@@ -43,7 +36,7 @@ public class MessageController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = SecurityUtil.getCurrentUser().getId();
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             PageResponseDTO<MessageDTO> messages = messageService.getAllMessages(userId, pageable);
             return ResponseEntity.ok(ApiResponse.success("获取所有消息成功", messages));
@@ -61,7 +54,7 @@ public class MessageController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = SecurityUtil.getCurrentUser().getId();
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             PageResponseDTO<CommentMessageDTO> messages = messageService.getCommentMessages(userId, pageable);
             return ResponseEntity.ok(ApiResponse.success("获取评论消息成功", messages));
@@ -79,7 +72,7 @@ public class MessageController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = SecurityUtil.getCurrentUser().getId();
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             PageResponseDTO<FavoriteMessageDTO> messages = messageService.getFavoriteMessages(userId, pageable);
             return ResponseEntity.ok(ApiResponse.success("获取收藏列表成功", messages));
@@ -97,7 +90,7 @@ public class MessageController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = SecurityUtil.getCurrentUser().getId();
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             PageResponseDTO<OrderMessageDTO> messages = messageService.getOrderMessages(userId, pageable);
             return ResponseEntity.ok(ApiResponse.success("获取订单消息成功", messages));
@@ -115,7 +108,7 @@ public class MessageController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = SecurityUtil.getCurrentUser().getId();
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             PageResponseDTO<ChatMessageDTO> messages = messageService.getChatMessages(userId, pageable);
             return ResponseEntity.ok(ApiResponse.success("获取聊天消息成功", messages));
@@ -133,7 +126,7 @@ public class MessageController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = SecurityUtil.getCurrentUser().getId();
             Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
             PageResponseDTO<ChatMessageDTO> messages = messageService.getUserChatMessages(userId, pageable);
             return ResponseEntity.ok(ApiResponse.success("获取所有聊天消息成功", messages));
@@ -163,7 +156,7 @@ public class MessageController {
     @PutMapping("/read/all")
     public ResponseEntity<ApiResponse> markAllAsRead(Authentication authentication) {
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = SecurityUtil.getCurrentUser().getId();
             messageService.markAllAsRead(userId);
             return ResponseEntity.ok(new ApiResponse(true, "所有消息已标记为已读"));
         } catch (Exception e) {
@@ -179,7 +172,7 @@ public class MessageController {
             Authentication authentication,
             @PathVariable String messageType) {
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = SecurityUtil.getCurrentUser().getId();
             messageService.markAllAsReadByType(userId, messageType);
             return ResponseEntity.ok(new ApiResponse(true, messageType + "类型的消息已标记为已读"));
         } catch (Exception e) {
@@ -193,7 +186,7 @@ public class MessageController {
     @GetMapping("/unread/count")
     public ResponseEntity<ApiResponse<Long>> countUnreadMessages(Authentication authentication) {
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = SecurityUtil.getCurrentUser().getId();
             long count = messageService.countUnreadMessages(userId);
             return ResponseEntity.ok(ApiResponse.success("获取未读消息数量成功", count));
         } catch (Exception e) {
@@ -209,7 +202,7 @@ public class MessageController {
             Authentication authentication,
             @PathVariable String messageType) {
         try {
-            Long userId = getUserIdFromAuthentication(authentication);
+            Long userId = SecurityUtil.getCurrentUser().getId();
             long count = messageService.countUnreadMessagesByType(userId, messageType);
             return ResponseEntity.ok(ApiResponse.success("获取" + messageType + "类型未读消息数量成功", count));
         } catch (Exception e) {

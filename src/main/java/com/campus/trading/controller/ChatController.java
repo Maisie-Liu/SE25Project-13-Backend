@@ -4,6 +4,7 @@ import com.campus.trading.dto.*;
 import com.campus.trading.service.ChatService;
 import com.campus.trading.entity.User;
 import com.campus.trading.repository.UserRepository;
+import com.campus.trading.config.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,14 +29,6 @@ public class ChatController {
         this.userRepository = userRepository;
     }
 
-    // 工具方法：通过认证对象获取用户ID
-    private Long getUserIdFromAuthentication(Authentication authentication) {
-        String username = authentication.getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
-        return user.getId();
-    }
-
     /**
      * 获取用户的所有聊天会话
      */
@@ -44,7 +37,7 @@ public class ChatController {
             Authentication authentication,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Long userId = getUserIdFromAuthentication(authentication);
+        Long userId = SecurityUtil.getCurrentUser().getId();
         Pageable pageable = PageRequest.of(page, size, Sort.by("updatedAt").descending());
         PageResponseDTO<ChatDTO> chats = chatService.getUserChats(userId, pageable);
         return ResponseEntity.ok(chats);
@@ -59,7 +52,7 @@ public class ChatController {
             @PathVariable Long chatId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Long userId = getUserIdFromAuthentication(authentication);
+        Long userId = SecurityUtil.getCurrentUser().getId();
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         PageResponseDTO<ChatMessageDTO> messages = chatService.getChatMessages(chatId, userId, pageable);
         return ResponseEntity.ok(messages);
@@ -73,7 +66,7 @@ public class ChatController {
             Authentication authentication,
             @PathVariable Long chatId,
             @RequestBody Map<String, String> payload) {
-        Long userId = getUserIdFromAuthentication(authentication);
+        Long userId = SecurityUtil.getCurrentUser().getId();
         String content = payload.get("content");
         
         if (content == null || content.trim().isEmpty()) {
@@ -91,7 +84,7 @@ public class ChatController {
     public ResponseEntity<ChatDTO> createChat(
             Authentication authentication,
             @RequestBody Map<String, Object> payload) {
-        Long userId = getUserIdFromAuthentication(authentication);
+        Long userId = SecurityUtil.getCurrentUser().getId();
         Long otherUserId = Long.valueOf(payload.get("otherUserId").toString());
         Long itemId = Long.valueOf(payload.get("itemId").toString());
         String initialMessage = (String) payload.get("initialMessage");
@@ -107,7 +100,7 @@ public class ChatController {
     public ResponseEntity<ApiResponse> markChatMessagesAsRead(
             Authentication authentication,
             @PathVariable Long chatId) {
-        Long userId = getUserIdFromAuthentication(authentication);
+        Long userId = SecurityUtil.getCurrentUser().getId();
         chatService.markChatMessagesAsRead(chatId, userId);
         return ResponseEntity.ok(new ApiResponse(true, "聊天消息已标记为已读"));
     }
@@ -119,7 +112,7 @@ public class ChatController {
     public ResponseEntity<Map<String, Integer>> countUnreadMessages(
             Authentication authentication,
             @PathVariable Long chatId) {
-        Long userId = getUserIdFromAuthentication(authentication);
+        Long userId = SecurityUtil.getCurrentUser().getId();
         int count = chatService.countUnreadMessages(chatId, userId);
         
         Map<String, Integer> response = new HashMap<>();
@@ -133,7 +126,7 @@ public class ChatController {
      */
     @GetMapping("/unread/total")
     public ResponseEntity<Map<String, Integer>> countTotalUnreadMessages(Authentication authentication) {
-        Long userId = getUserIdFromAuthentication(authentication);
+        Long userId = SecurityUtil.getCurrentUser().getId();
         int count = chatService.countTotalUnreadMessages(userId);
         
         Map<String, Integer> response = new HashMap<>();

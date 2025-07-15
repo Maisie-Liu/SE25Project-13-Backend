@@ -39,6 +39,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public Category findById(Long categoryId) {
-        return categoryRepository.findById(categoryId).orElse(null);
+        return categoryRepository.findById(categoryId)
+            .orElseThrow(() -> new RuntimeException("分类不存在: " + categoryId));
     }
 } 
