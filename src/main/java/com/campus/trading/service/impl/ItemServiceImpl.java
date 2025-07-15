@@ -47,6 +47,7 @@ import com.campus.trading.entity.ItemDocument;
 import com.campus.trading.repository.ItemESRepository;
 import java.util.Arrays;
 import java.util.Collections;
+import com.campus.trading.config.SecurityUtil;
 
 /**
  * 物品服务实现类
@@ -78,7 +79,7 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     public ItemDTO createItem(ItemCreateRequestDTO itemCreateRequest) {
         // 获取当前登录用户
-        User currentUser = getCurrentUser();
+        User currentUser = SecurityUtil.getCurrentUser();
 
         // 创建物品实体
         Item item = Item.builder()
@@ -456,7 +457,7 @@ public class ItemServiceImpl implements ItemService {
 
     // 辅助方法：检查是否是物品所有者
     private void checkItemOwner(Item item) {
-        User currentUser = getCurrentUser();
+        User currentUser = SecurityUtil.getCurrentUser();
         if (!item.getUser().getId().equals(currentUser.getId())) {
             throw new RuntimeException("只有物品所有者才能执行此操作");
         }

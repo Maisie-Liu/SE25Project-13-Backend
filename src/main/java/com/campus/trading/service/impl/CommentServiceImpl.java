@@ -9,6 +9,7 @@ import com.campus.trading.repository.CommentRepository;
 import com.campus.trading.repository.ItemRepository;
 import com.campus.trading.repository.UserRepository;
 import com.campus.trading.service.CommentService;
+import com.campus.trading.service.ImageService;
 import com.campus.trading.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,8 @@ public class CommentServiceImpl implements CommentService {
     private UserRepository userRepository;
     @Autowired
     private MessageService messageService;
+    @Autowired
+    private ImageService imageService;
 
     @Override
     @Transactional
@@ -111,7 +114,7 @@ public class CommentServiceImpl implements CommentService {
         dto.setContent(comment.getContent());
         dto.setUserId(comment.getUser().getId());
         dto.setUsername(username);
-        dto.setUserAvatar(avatar);
+        dto.setUserAvatar(avatar != null ? imageService.generateImageAccessToken(avatar) : null);
         dto.setItemId(comment.getItem().getId());
         dto.setParentId(comment.getParentId());
         dto.setReplyUserId(comment.getReplyUserId());
