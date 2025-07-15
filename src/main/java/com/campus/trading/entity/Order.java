@@ -62,7 +62,7 @@ public class Order {
     private BigDecimal amount;
 
     /**
-     * 订单状态：0-待确认，1-已确认，2-已拒绝，3-已完成，4-已取消
+     * 订单状态：0-待确认，1-已确认，2-已拒绝，3-待评价，4-已完成，5-已取消
      */
     @Column(nullable = false)
     private Integer status;

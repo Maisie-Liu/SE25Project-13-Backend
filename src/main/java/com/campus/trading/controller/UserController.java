@@ -4,9 +4,11 @@ import com.campus.trading.dto.ApiResponse;
 import com.campus.trading.dto.RatingDTO;
 import com.campus.trading.dto.UserDTO;
 import com.campus.trading.dto.UserPublicProfileDTO;
+import com.campus.trading.dto.OrderDTO;
 import com.campus.trading.service.ItemService;
 import com.campus.trading.service.RatingService;
 import com.campus.trading.service.UserService;
+import com.campus.trading.service.OrderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -26,12 +28,14 @@ public class UserController {
     private final UserService userService;
     private final ItemService itemService;
     private final RatingService ratingService;
+    private final OrderService orderService;
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-    public UserController(UserService userService, ItemService itemService, RatingService ratingService) {
+    public UserController(UserService userService, ItemService itemService, RatingService ratingService, OrderService orderService) {
         this.userService = userService;
         this.itemService = itemService;
         this.ratingService = ratingService;
+        this.orderService = orderService;
     }
 
     /**
@@ -64,11 +68,43 @@ public class UserController {
             List<RatingDTO> userRatings = ratingService.getUserRatings(userId);
             logger.debug("用户 ID: {} 评分数量: {}", userId, userRatings.size());
             
+            // 获取用户订单（作为买家和卖家）
+            List<OrderDTO> buyerOrders = orderService.listBuyerOrdersByUserId(userId);
+            List<OrderDTO> sellerOrders = orderService.listSellerOrdersByUserId(userId);
+            List<OrderDTO> allOrders = new java.util.ArrayList<>();
+            allOrders.addAll(buyerOrders);
+            allOrders.addAll(sellerOrders);
+            
             // 组装用户公开资料
             UserPublicProfileDTO profileDTO = new UserPublicProfileDTO();
             profileDTO.setUser(userDTO);
             profileDTO.setItems(userItems);
             profileDTO.setRatings(userRatings);
+            profileDTO.setOrders(allOrders);
+
+            // 计算卖家评分和买家评分（只统计有分数的订单）
+            double sellerSum = 0;
+            int sellerCount = 0;
+            double buyerSum = 0;
+            int buyerCount = 0;
+            for (OrderDTO order : allOrders) {
+                if (order.getSellerId() != null && order.getSellerId().equals(userId) && order.getSellerRating() != null) {
+                    sellerSum += order.getSellerRating();
+                    sellerCount++;
+                }
+                if (order.getBuyerId() != null && order.getBuyerId().equals(userId) && order.getBuyerRating() != null) {
+                    buyerSum += order.getBuyerRating();
+                    buyerCount++;
+                }
+            }
+            Double sellerAvg = sellerCount > 0 ? sellerSum / sellerCount : null;
+            Double buyerAvg = buyerCount > 0 ? buyerSum / buyerCount : null;
+            UserPublicProfileDTO.StatsDTO stats = new UserPublicProfileDTO.StatsDTO();
+            stats.setSellerRating(sellerAvg);
+            stats.setBuyerRating(buyerAvg);
+            stats.setSellerRatingCount(sellerCount);
+            stats.setBuyerRatingCount(buyerCount);
+            profileDTO.setStats(stats);
             
             logger.info("成功获取并组装用户 ID: {} 的完整公开资料", userId);
             return ApiResponse.success(profileDTO);

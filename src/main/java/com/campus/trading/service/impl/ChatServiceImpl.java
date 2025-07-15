@@ -242,14 +242,14 @@ public class ChatServiceImpl implements ChatService {
         if (msg == null || msg.trim().isEmpty()) {
             msg = "你好，我想要看" + (item.getName() != null ? item.getName() : "该商品");
         }
-        ChatMessage message = new ChatMessage();
-        message.setChatId(chat.getId());
-        message.setSender(user1);
-        message.setRecipient(user2);
+            ChatMessage message = new ChatMessage();
+            message.setChatId(chat.getId());
+            message.setSender(user1);
+            message.setRecipient(user2);
         message.setContent(msg);
-        message.setItem(item);
-        message.setRead(false);
-        messageRepository.save(message);
+            message.setItem(item);
+            message.setRead(false);
+            messageRepository.save(message);
         
         // 保存消息后，强制同步到 chat 的 lastMessage 字段
         chat.setLastMessage(msg);

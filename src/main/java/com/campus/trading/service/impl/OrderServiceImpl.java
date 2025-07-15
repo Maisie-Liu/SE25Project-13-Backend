@@ -83,7 +83,7 @@ public class OrderServiceImpl implements OrderService {
         Order savedOrder = orderRepository.save(order);
         
         // 更新物品状态
-        item.setStatus(2); // 已售出
+        // item.setStatus(2); // 已售出
         itemRepository.save(item);
         
         // 下单成功后减少库存
@@ -170,16 +170,21 @@ public class OrderServiceImpl implements OrderService {
         }
         
         // 更新订单
-        order.setStatus(2); // 已拒绝
+        order.setStatus(5); // 5-已取消
         order.setSellerRemark(sellerRemark);
         order.setUpdateTime(LocalDateTime.now());
         
         // 保存订单
         Order updatedOrder = orderRepository.save(order);
         
-        // 更新物品状态
+        // 更新物品状态和库存
         Item item = order.getItem();
         item.setStatus(1); // 重新上架
+        if (item.getStock() != null) {
+            item.setStock(item.getStock() + 1);
+        } else {
+            item.setStock(1);
+        }
         itemRepository.save(item);
         
         // 转换为DTO返回
@@ -232,15 +237,20 @@ public class OrderServiceImpl implements OrderService {
         }
         
         // 更新订单
-        order.setStatus(4); // 已取消
+        order.setStatus(5); // 5-已取消
         order.setUpdateTime(LocalDateTime.now());
         
         // 保存订单
         Order updatedOrder = orderRepository.save(order);
         
-        // 更新物品状态
+        // 更新物品状态和库存
         Item item = order.getItem();
         item.setStatus(1); // 重新上架
+        if (item.getStock() != null) {
+            item.setStock(item.getStock() + 1);
+        } else {
+            item.setStock(1);
+        }
         itemRepository.save(item);
         
         // 转换为DTO返回
@@ -445,6 +455,21 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    @Override
+    public List<OrderDTO> listBuyerOrdersByUserId(Long userId) {
+        User user = userService.findById(userId);
+        List<Order> orders = orderRepository.findByBuyer(user);
+        return orders.stream().map(this::convertToDTO).collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    public List<OrderDTO> listSellerOrdersByUserId(Long userId) {
+        User user = userService.findById(userId);
+        // 需要实现findBySeller(User user)方法
+        List<Order> orders = orderRepository.findBySeller(user);
+        return orders.stream().map(this::convertToDTO).collect(java.util.stream.Collectors.toList());
+    }
+
     // 辅助方法：获取订单或抛出异常
     private Order getOrderOrThrow(Long id) {
         return orderRepository.findById(id)
@@ -529,8 +554,9 @@ public class OrderServiceImpl implements OrderService {
             case 0: return "待确认";
             case 1: return "已确认";
             case 2: return "已拒绝";
-            case 3: return "已完成";
-            case 4: return "已取消";
+            case 3: return "待评价";
+            case 4: return "已完成";
+            case 5: return "已取消";
             default: return "未知状态";
         }
     }

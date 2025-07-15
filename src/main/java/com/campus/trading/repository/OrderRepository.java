@@ -89,6 +89,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      */
     List<Order> findByBuyer(User user);
 
+    /**
+     * 根据卖家查询所有订单列表（无分页）
+     */
+    List<Order> findBySeller(User seller);
+
     // 统计所有订单总数
     long count();
 } 

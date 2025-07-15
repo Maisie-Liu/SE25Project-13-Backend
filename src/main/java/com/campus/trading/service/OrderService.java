@@ -3,6 +3,8 @@ package com.campus.trading.service;
 import com.campus.trading.dto.OrderDTO;
 import com.campus.trading.dto.PageResponseDTO;
 
+import java.util.List;
+
 /**
  * 订单服务接口
  */
@@ -123,4 +125,14 @@ public interface OrderService {
      * 订单评价
      */
     OrderDTO commentOrder(Long id, String comment, boolean isBuyer, Integer rating);
+
+    /**
+     * 获取指定用户作为买家的所有订单DTO列表
+     */
+    List<OrderDTO> listBuyerOrdersByUserId(Long userId);
+
+    /**
+     * 获取指定用户作为卖家的所有订单DTO列表
+     */
+    List<OrderDTO> listSellerOrdersByUserId(Long userId);
 } 

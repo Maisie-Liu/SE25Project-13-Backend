@@ -32,6 +32,16 @@ public class UserPublicProfileDTO {
     private List<RatingDTO> ratings;
     
     /**
+     * 用户订单列表（用于展示收到的订单评论）
+     */
+    private List<OrderDTO> orders;
+    
+    /**
+     * 用户统计信息（如平均评分等）
+     */
+    private StatsDTO stats;
+    
+    /**
      * 统计信息
      */
     @Data

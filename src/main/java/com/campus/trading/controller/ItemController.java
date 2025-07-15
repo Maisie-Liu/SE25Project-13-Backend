@@ -78,12 +78,12 @@ public class ItemController {
         // 再增加物品热度
         // itemService.incrementItemPopularity(id);
         // 自动记录浏览行为
-        if (principal != null) {
-            User user = userService.getCurrentUser(principal);
-            if (user.isAllowPersonalizedRecommend()) {
-                userViewService.recordView(user, itemService.getItemEntityById(id));
-            }
-        }
+//        if (principal != null) {
+//            User user = userService.getCurrentUser(principal);
+//            if (user.isAllowPersonalizedRecommend()) {
+//                userViewService.recordView(user, itemService.getItemEntityById(id));
+//            }
+//        }
         return ApiResponse.success(itemDTO);
     }
 

@@ -651,7 +651,7 @@ public class ItemServiceImpl implements ItemService {
                     .apiKey(qwen3Properties.getApiKey())
                     .model("qwen-vl-max")
                     .message(userMessage)
-                    .build();
+                .build();
             MultiModalConversationResult result = conv.call(param);
             if (result != null && result.getOutput() != null
                 && result.getOutput().getChoices() != null
