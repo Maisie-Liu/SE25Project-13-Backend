@@ -70,6 +70,7 @@ public class Item {
 
     /**
      * 物品状态：0-下架，1-上架，2-已售出
+     * 删除功能已禁用，仅允许下架
      */
     @Column(nullable = false)
     private Integer status;

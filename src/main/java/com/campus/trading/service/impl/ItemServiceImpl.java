@@ -190,16 +190,8 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public boolean deleteItem(Long id) {
-        // 获取物品
-        Item item = getItemOrThrow(id);
-        
-        // 检查是否是物品所有者
-        checkItemOwner(item);
-        
-        // 删除物品
-        itemRepository.delete(item);
-        
-        return true;
+        // 删除功能已移除，仅允许下架
+        throw new UnsupportedOperationException("删除物品功能已禁用，请使用下架操作");
     }
 
     @Override

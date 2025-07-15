@@ -88,18 +88,6 @@ public class ItemController {
     }
 
     /**
-     * 删除物品
-     *
-     * @param id 物品ID
-     * @return 是否删除成功
-     */
-    @DeleteMapping("/{id}")
-    public ApiResponse<Boolean> deleteItem(@PathVariable Long id) {
-        boolean success = itemService.deleteItem(id);
-        return ApiResponse.success("删除物品成功", success);
-    }
-
-    /**
      * 上架物品
      *
      * @param id 物品ID
