@@ -300,24 +300,34 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @Transactional
     public OrderMessageDTO createOrderMessage(Order order, String status, String statusText, String statusDescription) {
-        OrderMessage message = new OrderMessage();
+        // 无论是什么状态，都同时给买家和卖家发送消息
         
-        // 订单状态变更消息发送给买家和卖家
-        if (status.equals("created") || status.equals("confirmed")) {
-            message.setRecipient(order.getBuyer());
-            message.setSender(order.getSeller());
-        } else {
-            message.setRecipient(order.getSeller());
-            message.setSender(order.getBuyer());
-        }
+        // 给买家的消息
+        OrderMessage buyerMessage = new OrderMessage();
+        buyerMessage.setRecipient(order.getBuyer());
+        buyerMessage.setSender(order.getSeller());
+        buyerMessage.setOrder(order);
+        buyerMessage.setStatus(status);
+        buyerMessage.setStatusText(statusText);
+        buyerMessage.setRead(false);
         
-        message.setOrder(order);
-        message.setStatus(status);
-        message.setStatusText(statusText);
-        message.setRead(false);
+        // 给卖家的消息
+        OrderMessage sellerMessage = new OrderMessage();
+        sellerMessage.setRecipient(order.getSeller());
+        sellerMessage.setSender(order.getBuyer());
+        sellerMessage.setOrder(order);
+        sellerMessage.setStatus(status);
+        sellerMessage.setStatusText(statusText);
+        sellerMessage.setRead(false);
         
-        OrderMessage savedMessage = (OrderMessage) messageRepository.save(message);
-        return convertToOrderMessageDTO(savedMessage);
+        // 保存买家的消息
+        OrderMessage savedBuyerMessage = (OrderMessage) messageRepository.save(buyerMessage);
+        
+        // 保存卖家的消息
+        messageRepository.save(sellerMessage);
+        
+        // 返回买家的消息DTO
+        return convertToOrderMessageDTO(savedBuyerMessage);
     }
     
     @Override
@@ -504,6 +514,10 @@ public class MessageServiceImpl implements MessageService {
             case "shipping":
                 dto.setStep(2);
                 dto.setStatusDescription("物品正在配送中");
+                break;
+            case "received":
+                dto.setStep(2);
+                dto.setStatusDescription("买家已确认收货，等待评价");
                 break;
             case "completed":
                 dto.setStep(3);
