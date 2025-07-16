@@ -15,5 +15,14 @@ public interface UserProfileService {
      */
     void updateProfile(User user);
 
+    /**
+     * 增加信誉分
+     */
+    void addReputationScore(User user, int score, String reason);
+    /**
+     * 扣减信誉分
+     */
+    void deductReputationScore(User user, int score, String reason);
+
     UserProfileDTO getProfileDTO(User user);
 }

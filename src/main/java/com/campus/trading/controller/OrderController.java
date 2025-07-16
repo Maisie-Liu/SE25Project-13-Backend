@@ -6,6 +6,8 @@ import com.campus.trading.dto.PageResponseDTO;
 import com.campus.trading.service.OrderService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 /**
  * 订单控制器
  */
@@ -79,16 +81,17 @@ public class OrderController {
     }
 
     /**
-     * 卖家拒绝订单
+     * 卖家/买家拒绝订单
      *
      * @param id           订单ID
-     * @param sellerRemark 卖家备注
+     * @param body         JSON body，包含sellerRemark
      * @return 拒绝后的订单
      */
     @PutMapping("/{id}/reject")
     public ApiResponse<OrderDTO> rejectOrder(
             @PathVariable Long id,
-            @RequestParam(required = false) String sellerRemark) {
+            @RequestBody Map<String, String> body) {
+        String sellerRemark = body.get("sellerRemark");
         OrderDTO orderDTO = orderService.rejectOrder(id, sellerRemark);
         return ApiResponse.success("拒绝订单成功", orderDTO);
     }
@@ -109,11 +112,12 @@ public class OrderController {
      * 取消订单
      *
      * @param id 订单ID
+     * @param reason 取消原因
      * @return 取消后的订单
      */
     @PutMapping("/{id}/cancel")
-    public ApiResponse<OrderDTO> cancelOrder(@PathVariable Long id) {
-        OrderDTO orderDTO = orderService.cancelOrder(id);
+    public ApiResponse<OrderDTO> cancelOrder(@PathVariable Long id, @RequestParam(required = false) String reason) {
+        OrderDTO orderDTO = orderService.cancelOrder(id, reason);
         return ApiResponse.success("取消订单成功", orderDTO);
     }
 
@@ -179,15 +183,6 @@ public class OrderController {
             @RequestParam(defaultValue = "10") int pageSize) {
         PageResponseDTO<OrderDTO> pageResponse = orderService.listSellerOrdersByStatus(status, pageNum, pageSize);
         return ApiResponse.success(pageResponse);
-    }
-
-    /**
-     * 卖家发货
-     */
-    @PutMapping("/{id}/deliver")
-    public ApiResponse<OrderDTO> deliverOrder(@PathVariable Long id, @RequestParam String trackingNumber) {
-        OrderDTO orderDTO = orderService.deliverOrder(id, trackingNumber);
-        return ApiResponse.success("发货成功", orderDTO);
     }
 
     /**

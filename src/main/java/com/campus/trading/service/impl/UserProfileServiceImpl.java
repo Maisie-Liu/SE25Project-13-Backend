@@ -115,4 +115,26 @@ public class UserProfileServiceImpl implements UserProfileService {
                 .categoryInterest(interest)
                 .build();
     }
+
+    @Override
+    @Transactional
+    public void addReputationScore(User user, int score, String reason) {
+        UserProfile profile = getOrCreateProfile(user);
+        int oldScore = profile.getReputationScore() != null ? profile.getReputationScore() : 100;
+        int newScore = Math.min(100, oldScore + score);
+        profile.setReputationScore(newScore);
+        userProfileRepository.save(profile);
+        // 可扩展：记录信誉分变动日志
+    }
+
+    @Override
+    @Transactional
+    public void deductReputationScore(User user, int score, String reason) {
+        UserProfile profile = getOrCreateProfile(user);
+        int oldScore = profile.getReputationScore() != null ? profile.getReputationScore() : 100;
+        int newScore = Math.max(0, oldScore - score);
+        profile.setReputationScore(newScore);
+        userProfileRepository.save(profile);
+        // 可扩展：记录信誉分变动日志
+    }
 } 
