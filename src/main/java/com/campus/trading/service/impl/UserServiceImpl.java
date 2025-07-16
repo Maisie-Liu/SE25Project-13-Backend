@@ -6,6 +6,7 @@ import com.campus.trading.dto.RegisterRequestDTO;
 import com.campus.trading.dto.UserDTO;
 import com.campus.trading.entity.User;
 import com.campus.trading.repository.UserRepository;
+import com.campus.trading.repository.UserProfileRepository;
 import com.campus.trading.service.UserService;
 import com.campus.trading.config.JwtUtils;
 import com.campus.trading.service.ImageService;
@@ -38,6 +39,7 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
     private final ImageService imageService;
+    private final UserProfileRepository userProfileRepository;
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Value("${jwt.expiration}")
@@ -48,12 +50,14 @@ public class UserServiceImpl implements UserService {
                            PasswordEncoder passwordEncoder,
                            AuthenticationManager authenticationManager,
                            JwtUtils jwtUtils,
-                           ImageService imageService) {
+                           ImageService imageService,
+                           UserProfileRepository userProfileRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
         this.imageService = imageService;
+        this.userProfileRepository = userProfileRepository;
     }
 
     @Override
@@ -231,41 +235,14 @@ public class UserServiceImpl implements UserService {
     public UserDTO getUserPublicProfile(Long userId) {
         try {
             logger.debug("开始查询用户公开资料，用户ID: {}", userId);
-            
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> {
                         logger.warn("找不到用户，ID: {}", userId);
                         return new UsernameNotFoundException("用户不存在: ID=" + userId);
                     });
-            
             logger.debug("找到用户: {}, 昵称: {}", user.getUsername(), user.getNickname());
-            
-            // 输出调试信息
-            logger.debug("用户信息 - ID: {}, 用户名: {}, 昵称: {}, 头像ID: {}, 简介: {}, 位置: {}", 
-                    user.getId(), user.getUsername(), user.getNickname(), 
-                    user.getAvatarImageId(), user.getBio(), user.getLocation());
-            
-            String avatarUrl = null;
-            if (user.getAvatarImageId() != null && !user.getAvatarImageId().isEmpty()) {
-                avatarUrl = imageService.generateImageAccessToken(user.getAvatarImageId());
-                logger.debug("用户头像URL生成: {}", avatarUrl);
-            } else {
-                // 使用默认头像
-                avatarUrl = "/api/image/default-avatar.png";
-                logger.debug("用户没有设置头像，使用默认头像: {}", avatarUrl);
-            }
-            
-            // 只返回公开信息，不包含敏感字段
-            UserDTO dto = UserDTO.builder()
-                    .id(user.getId())
-                    .username(user.getUsername())
-                    .nickname(user.getNickname())
-                    .avatarUrl(avatarUrl)
-                    .bio(user.getBio() != null ? user.getBio() : "这位用户很懒，还没有填写个人简介")
-                    .location(user.getLocation() != null ? user.getLocation() : "未知")
-                    .createTime(user.getCreateTime())
-                    .build();
-            
+            // 用 convertToDTO 保证 reputationScore 字段被赋值
+            UserDTO dto = convertToDTO(user);
             logger.debug("用户公开资料DTO构建成功: {}", dto);
             return dto;
         } catch (UsernameNotFoundException e) {
@@ -292,21 +269,29 @@ public class UserServiceImpl implements UserService {
     // 辅助方法：将实体转换为DTO
     @Override
     public UserDTO convertToDTO(User user) {
-        return UserDTO.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .nickname(user.getNickname())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .avatarUrl(imageService.generateImageAccessToken(user.getAvatarImageId()))
-                .roles(user.getRoles())
-                .status(user.getStatus())
-                .bio(user.getBio())
-                .location(user.getLocation())
-                .lastLoginTime(user.getLastLoginTime())
-                .createTime(user.getCreateTime())
-                .bio(user.getBio())
-                .allowPersonalizedRecommend(user.isAllowPersonalizedRecommend())
-                .build();
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setNickname(user.getNickname());
+        dto.setEmail(user.getEmail());
+        dto.setPhone(user.getPhone());
+        dto.setAvatarUrl(user.getAvatarImageId() != null ? imageService.generateImageAccessToken(user.getAvatarImageId()) : null);
+        dto.setRoles(user.getRoles());
+        dto.setStatus(user.getStatus());
+        dto.setLastLoginTime(user.getLastLoginTime());
+        dto.setBio(user.getBio());
+        dto.setLocation(user.getLocation());
+        dto.setCreateTime(user.getCreateTime());
+        dto.setAllowPersonalizedRecommend(user.isAllowPersonalizedRecommend());
+        // 设置信誉分
+        if (user.getId() != null) {
+            com.campus.trading.entity.UserProfile profile = userProfileRepository.findByUser(user).orElse(null);
+            if (profile != null) {
+                dto.setReputationScore(profile.getReputationScore());
+            } else {
+                dto.setReputationScore(100);
+            }
+        }
+        return dto;
     }
 } 

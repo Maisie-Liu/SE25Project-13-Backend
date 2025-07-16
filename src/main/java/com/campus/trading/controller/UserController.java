@@ -104,6 +104,8 @@ public class UserController {
             stats.setBuyerRating(buyerAvg);
             stats.setSellerRatingCount(sellerCount);
             stats.setBuyerRatingCount(buyerCount);
+            // 设置信誉分
+            stats.setReputationScore(userDTO.getReputationScore());
             profileDTO.setStats(stats);
             
             logger.info("成功获取并组装用户 ID: {} 的完整公开资料", userId);

@@ -78,5 +78,17 @@ public class UserPublicProfileDTO {
          * 发布物品总数
          */
         private Integer totalItemsCount;
+        
+        /**
+         * 信誉分
+         */
+        private Integer reputationScore;
+
+        public Integer getReputationScore() {
+            return reputationScore;
+        }
+        public void setReputationScore(Integer reputationScore) {
+            this.reputationScore = reputationScore;
+        }
     }
 } 

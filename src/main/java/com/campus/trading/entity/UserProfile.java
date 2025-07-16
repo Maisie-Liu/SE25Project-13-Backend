@@ -30,6 +30,19 @@ public class UserProfile {
     private Map<Long, Double> categoryInterest;
 
     /**
+     * 信誉分，初始100分
+     */
+    @Column(nullable = false)
+    private Integer reputationScore = 100;
+
+    public Integer getReputationScore() {
+        return reputationScore;
+    }
+    public void setReputationScore(Integer reputationScore) {
+        this.reputationScore = reputationScore;
+    }
+
+    /**
      * 画像最后更新时间
      */
     @Column(nullable = false)

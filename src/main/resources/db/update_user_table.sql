@@ -30,3 +30,5 @@ VALUES
   (2, 2, 1, 3, 'BUYER', 5, '买家付款及时，很愉快的交易。', NOW(), NOW()),
   (3, 3, 1, 4, 'SELLER', 5, '卖家发货速度快，服务态度很好。', NOW(), NOW()),
   (3, 3, 4, 1, 'BUYER', 4, '买家人很好，就是有点挑剔。', NOW(), NOW()); 
+
+ALTER TABLE t_user_profile ADD COLUMN reputation_score INT NOT NULL DEFAULT 100; 
