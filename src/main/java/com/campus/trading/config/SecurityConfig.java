@@ -69,9 +69,17 @@ public class SecurityConfig {
             .and()
             .exceptionHandling()
             .authenticationEntryPoint((request, response, authException) -> {
-                response.setContentType("application/json;charset=UTF-8");
-                response.setStatus(403);
-                response.getWriter().write("{\"code\":403,\"message\":\"访问被拒绝，请先登录\"}");
+                // 仅对未认证访问受保护资源时返回
+                if (request.getRequestURI().equals("/auth/login")) {
+                    // 交由Controller处理
+                    response.setStatus(401);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"code\":401,\"message\":\"用户名或密码错误\"}");
+                } else {
+                    response.setStatus(401);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"code\":401,\"message\":\"访问被拒绝，请先登录\"}");
+                }
             });
             
         // 允许H2控制台的frame显示

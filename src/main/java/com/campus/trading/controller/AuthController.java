@@ -68,8 +68,17 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ApiResponse<LoginResponseDTO> login(@RequestBody @Validated LoginRequestDTO loginRequest) {
-        LoginResponseDTO loginResponse = userService.login(loginRequest);
-        return ApiResponse.success("登录成功", loginResponse);
+        try {
+            LoginResponseDTO loginResponse = userService.login(loginRequest);
+            return ApiResponse.success("登录成功", loginResponse);
+        } catch (Exception e) {
+            String msg = e.getMessage();
+            // Spring Security常见异常信息
+            if (msg != null && (msg.contains("Bad credentials") || msg.contains("用户不存在"))) {
+                return ApiResponse.error(401, "用户名或密码错误");
+            }
+            return ApiResponse.error(401, "登录失败: " + msg);
+        }
     }
 
     /**
