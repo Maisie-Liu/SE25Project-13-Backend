@@ -8,6 +8,7 @@ import com.campus.trading.entity.User;
 import com.campus.trading.repository.ItemRepository;
 import com.campus.trading.repository.OrderRepository;
 import com.campus.trading.service.ItemService;
+import com.campus.trading.service.MessageService;
 import com.campus.trading.service.OrderService;
 import com.campus.trading.service.UserProfileService;
 import com.campus.trading.service.UserService;
@@ -36,14 +37,16 @@ public class OrderServiceImpl implements OrderService {
     private final UserService userService;
     private final ItemService itemService;
     private final UserProfileService userProfileService;
+    private final MessageService messageService;
 
     @Autowired
-    public OrderServiceImpl(OrderRepository orderRepository, ItemRepository itemRepository, UserService userService, ItemService itemService, UserProfileService userProfileService) {
+    public OrderServiceImpl(OrderRepository orderRepository, ItemRepository itemRepository, UserService userService, ItemService itemService, UserProfileService userProfileService, MessageService messageService) {
         this.orderRepository = orderRepository;
         this.itemRepository = itemRepository;
         this.userService = userService;
         this.itemService = itemService;
         this.userProfileService = userProfileService;
+        this.messageService = messageService;
     }
 
     @Override
@@ -95,6 +98,14 @@ public class OrderServiceImpl implements OrderService {
             itemRepository.save(item);
         }
         
+        // 创建订单消息
+        try {
+            messageService.createOrderMessage(savedOrder, "created", "已创建", "您有一个新订单，买家已下单，请及时确认");
+        } catch (Exception e) {
+            // 记录错误但不影响主流程
+            System.err.println("创建订单消息失败: " + e.getMessage());
+        }
+        
         // 转换为DTO返回
         OrderDTO dto = convertToDTO(savedOrder);
         // 下单后自动更新用户画像
@@ -134,23 +145,28 @@ public class OrderServiceImpl implements OrderService {
     public OrderDTO confirmOrder(Long id, String sellerRemark) {
         // 获取订单
         Order order = getOrderOrThrow(id);
-        
         // 检查是否是卖家
         checkOrderSeller(order);
-        
         // 检查订单状态
         if (order.getStatus() != 0) {
             throw new RuntimeException("订单状态不正确");
         }
-        
         // 更新订单
-        order.setStatus(1); // 已确认
+        order.setStatus(1); // 直接变为待收货
         order.setSellerRemark(sellerRemark);
         order.setUpdateTime(LocalDateTime.now());
-        
         // 保存订单
         Order updatedOrder = orderRepository.save(order);
+
+        // 创建订单消息
+        try {
+            messageService.createOrderMessage(updatedOrder, "confirmed", "已确认", "卖家已确认订单，请确认收货");
+        } catch (Exception e) {
+            // 记录错误但不影响主流程
+            System.err.println("创建订单确认消息失败: " + e.getMessage());
+        }
         
+
         // 转换为DTO返回
         return convertToDTO(updatedOrder);
     }
@@ -161,14 +177,19 @@ public class OrderServiceImpl implements OrderService {
         // 获取订单
         Order order = getOrderOrThrow(id);
         
-        // 检查是否是卖家
-        checkOrderSeller(order);
+        // 检查是否是卖家或买家
+        User currentUser = getCurrentUser();
+        if (!order.getSeller().getId().equals(currentUser.getId()) && !order.getBuyer().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("只有买家或卖家才能执行此操作");
+        }
         
-        // 检查订单状态
-        if (order.getStatus() != 0) {
+        // 检查订单状态，允许在处理中阶段都能中止
+        if (!(order.getStatus() == 0 || order.getStatus() == 1 || order.getStatus() == 2 || order.getStatus() == 3)) {
             throw new RuntimeException("订单状态不正确");
         }
         
+        int originalStatus = order.getStatus(); // 保存原始状态
+
         // 更新订单
         order.setStatus(5); // 5-已取消
         order.setSellerRemark(sellerRemark);
@@ -187,6 +208,56 @@ public class OrderServiceImpl implements OrderService {
         }
         itemRepository.save(item);
         
+
+        // 信誉分扣分逻辑（只针对当前操作人，不分买家卖家）
+        if (sellerRemark != null && !sellerRemark.trim().isEmpty()) {
+            String[] objectiveReasons = {"买家长时间未响应", "商品已售出", "买家要求取消", "与买家协商一致取消", "与卖家协商一致取消","描述不符"};
+            boolean isObjective = false;
+            for (String obj : objectiveReasons) {
+                if (sellerRemark.contains(obj)) {
+                    isObjective = true;
+                    break;
+                }
+            }
+            // 自身问题关键词，覆盖买家和卖家
+            String[] selfReasons = {
+                "临时有事", "不想卖了", "不需要该商品了", "无法交易", "价格不合适", "描述不符"
+            };
+            boolean isSelf = false;
+            for (String self : selfReasons) {
+                if (sellerRemark.contains(self)) {
+                    isSelf = true;
+                    break;
+                }
+            }
+            if (isSelf) {
+                int deduct = 10;
+                if (originalStatus == 0) {
+                    deduct = 0;
+                } else if (originalStatus == 1) {
+                    deduct = 10;
+                } else if (originalStatus == 2) {
+                    deduct = 15;
+                } else if (originalStatus == 3) {
+                    deduct = 20;
+                } else {
+                    deduct = 10;
+                }
+                if (deduct > 0) {
+                    userProfileService.deductReputationScore(currentUser, deduct, sellerRemark);
+                }
+            }
+        }
+
+        // 创建订单消息
+        try {
+            messageService.createOrderMessage(updatedOrder, "rejected", "已拒绝", "卖家已拒绝订单：" + (sellerRemark != null ? sellerRemark : "无理由"));
+        } catch (Exception e) {
+            // 记录错误但不影响主流程
+            System.err.println("创建订单拒绝消息失败: " + e.getMessage());
+        }
+        
+
         // 转换为DTO返回
         return convertToDTO(updatedOrder);
     }
@@ -201,17 +272,25 @@ public class OrderServiceImpl implements OrderService {
         checkOrderAccess(order);
         
         // 检查订单状态
-        if (order.getStatus() != 1) {
+        if (order.getStatus() != 2) {
             throw new RuntimeException("订单状态不正确");
         }
         
         // 更新订单
-        order.setStatus(3); // 已完成
+        order.setStatus(3); // 待评价
         order.setFinishTime(LocalDateTime.now());
         order.setUpdateTime(LocalDateTime.now());
         
         // 保存订单
         Order updatedOrder = orderRepository.save(order);
+        
+        // 创建订单消息
+        try {
+            messageService.createOrderMessage(updatedOrder, "completed", "已完成", "订单已完成，感谢您的购买");
+        } catch (Exception e) {
+            // 记录错误但不影响主流程
+            System.err.println("创建订单完成消息失败: " + e.getMessage());
+        }
         
         // 转换为DTO返回
         OrderDTO dto = convertToDTO(updatedOrder);
@@ -224,25 +303,23 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderDTO cancelOrder(Long id) {
+    public OrderDTO cancelOrder(Long id, String reason) {
         // 获取订单
         Order order = getOrderOrThrow(id);
-        
         // 检查是否是买家
         checkOrderBuyer(order);
-        
         // 检查订单状态
         if (order.getStatus() != 0 && order.getStatus() != 1) {
             throw new RuntimeException("订单状态不正确");
         }
-        
         // 更新订单
         order.setStatus(5); // 5-已取消
         order.setUpdateTime(LocalDateTime.now());
-        
+        if (reason != null && !reason.trim().isEmpty()) {
+            order.setSellerRemark(reason); // 暂存到 sellerRemark 字段，后续可扩展新字段
+        }
         // 保存订单
         Order updatedOrder = orderRepository.save(order);
-        
         // 更新物品状态和库存
         Item item = order.getItem();
         item.setStatus(1); // 重新上架
@@ -252,7 +329,34 @@ public class OrderServiceImpl implements OrderService {
             item.setStock(1);
         }
         itemRepository.save(item);
+
+        // 信誉分扣分逻辑
+        if (reason != null && !reason.trim().isEmpty()) {
+            String[] objectiveReasons = {"买家长时间未响应", "商品已售出", "买家要求取消", "与买家协商一致取消", "与卖家协商一致取消"};
+            boolean isObjective = false;
+            for (String obj : objectiveReasons) {
+                if (reason.contains(obj)) {
+                    isObjective = true;
+                    break;
+                }
+            }
+            if (!isObjective) {
+                // 买家/卖家都扣分（可根据实际业务调整）
+                userProfileService.deductReputationScore(order.getBuyer(), 10, reason);
+                userProfileService.deductReputationScore(order.getSeller(), 10, reason);
+            }
+        }
+
         
+        // 创建订单消息
+        try {
+            messageService.createOrderMessage(updatedOrder, "cancelled", "已取消", "买家已取消订单");
+        } catch (Exception e) {
+            // 记录错误但不影响主流程
+            System.err.println("创建订单取消消息失败: " + e.getMessage());
+        }
+        
+
         // 转换为DTO返回
         return convertToDTO(updatedOrder);
     }
@@ -371,7 +475,6 @@ public class OrderServiceImpl implements OrderService {
         );
     }
 
-    @Override
     @Transactional
     public OrderDTO deliverOrder(Long id, String trackingNumber) {
         // 获取订单
@@ -387,6 +490,17 @@ public class OrderServiceImpl implements OrderService {
         order.setTrackingNumber(trackingNumber);
         order.setUpdateTime(LocalDateTime.now());
         Order updatedOrder = orderRepository.save(order);
+        
+        // 创建订单消息
+        try {
+            String trackingInfo = trackingNumber != null && !trackingNumber.trim().isEmpty() ? 
+                    "，物流单号：" + trackingNumber : "";
+            messageService.createOrderMessage(updatedOrder, "shipping", "运送中", "卖家已发货" + trackingInfo);
+        } catch (Exception e) {
+            // 记录错误但不影响主流程
+            System.err.println("创建订单发货消息失败: " + e.getMessage());
+        }
+        
         return convertToDTO(updatedOrder);
     }
 
@@ -405,6 +519,17 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(3);
         order.setUpdateTime(LocalDateTime.now());
         Order updatedOrder = orderRepository.save(order);
+        
+        // 创建订单消息
+        try {
+            messageService.createOrderMessage(updatedOrder, "received", "已收货", "买家已确认收货，请评价订单");
+            System.out.println("成功创建订单收货消息: 订单ID=" + id);
+        } catch (Exception e) {
+            // 记录错误但不影响主流程
+            System.err.println("创建订单收货消息失败: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
         return convertToDTO(updatedOrder);
     }
 
@@ -429,6 +554,18 @@ public class OrderServiceImpl implements OrderService {
                 order.setSellerComment(comment);
                 order.setSellerRating(rating);
                 updated = true;
+                // 信誉分操作
+                if (rating != null) {
+                    if (rating == 5) {
+                        userProfileService.addReputationScore(order.getSeller(), 2, "获得买家5星好评");
+                    } else if (rating == 3) {
+                        userProfileService.deductReputationScore(order.getSeller(), 2, "获得买家3星差评");
+                    } else if (rating == 2) {
+                        userProfileService.deductReputationScore(order.getSeller(), 4, "获得买家2星差评");
+                    } else if (rating == 1) {
+                        userProfileService.deductReputationScore(order.getSeller(), 6, "获得买家1星差评");
+                    }
+                }
             }
         } else {
             // 卖家只能评价买家
@@ -439,16 +576,41 @@ public class OrderServiceImpl implements OrderService {
                 order.setBuyerComment(comment);
                 order.setBuyerRating(rating);
                 updated = true;
+                // 信誉分操作
+                if (rating != null) {
+                    if (rating == 5) {
+                        userProfileService.addReputationScore(order.getBuyer(), 2, "获得卖家5星好评");
+                    } else if (rating == 3) {
+                        userProfileService.deductReputationScore(order.getBuyer(), 2, "获得卖家3星差评");
+                    } else if (rating == 2) {
+                        userProfileService.deductReputationScore(order.getBuyer(), 4, "获得卖家2星差评");
+                    } else if (rating == 1) {
+                        userProfileService.deductReputationScore(order.getBuyer(), 6, "获得卖家1星差评");
+                    }
+                }
             }
         }
         // 如果双方都已评价，则订单状态变为已完成（4）
+        boolean bothCommented = false;
         if (order.getBuyerComment() != null && order.getSellerComment() != null) {
             order.setStatus(4);
             order.setFinishTime(LocalDateTime.now());
+            bothCommented = true;
         }
         if (updated) {
             order.setUpdateTime(LocalDateTime.now());
             Order updatedOrder = orderRepository.save(order);
+            
+            // 如果双方都已评价，创建订单完成消息
+            if (bothCommented) {
+                try {
+                    messageService.createOrderMessage(updatedOrder, "completed", "已完成", "双方已完成评价，订单已完成");
+                } catch (Exception e) {
+                    // 记录错误但不影响主流程
+                    System.err.println("创建订单评价完成消息失败: " + e.getMessage());
+                }
+            }
+            
             return convertToDTO(updatedOrder);
         } else {
             return convertToDTO(order);
@@ -552,8 +714,8 @@ public class OrderServiceImpl implements OrderService {
     private String getStatusText(Integer status) {
         switch (status) {
             case 0: return "待确认";
-            case 1: return "已确认";
-            case 2: return "已拒绝";
+            case 1: return "待收货";
+            case 2: return "待收货";
             case 3: return "待评价";
             case 4: return "已完成";
             case 5: return "已取消";

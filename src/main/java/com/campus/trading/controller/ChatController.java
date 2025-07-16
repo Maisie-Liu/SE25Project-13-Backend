@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/chats")
+@RequestMapping("/chats")
 public class ChatController {
 
     private final ChatService chatService;

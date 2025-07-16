@@ -21,6 +21,7 @@ public class UserDTO {
     private String location;
     private LocalDateTime createTime;
     private Boolean allowPersonalizedRecommend;
+    private Integer reputationScore;
     
     public UserDTO() {
     }
@@ -150,6 +151,13 @@ public class UserDTO {
     
     public void setAllowPersonalizedRecommend(Boolean allowPersonalizedRecommend) {
         this.allowPersonalizedRecommend = allowPersonalizedRecommend;
+    }
+    
+    public Integer getReputationScore() {
+        return reputationScore;
+    }
+    public void setReputationScore(Integer reputationScore) {
+        this.reputationScore = reputationScore;
     }
     
     public static Builder builder() {

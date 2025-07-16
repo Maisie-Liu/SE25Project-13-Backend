@@ -67,9 +67,10 @@ public interface OrderService {
      * 取消订单
      *
      * @param id 订单ID
+     * @param reason 取消原因
      * @return 取消后的订单
      */
-    OrderDTO cancelOrder(Long id);
+    OrderDTO cancelOrder(Long id, String reason);
 
     /**
      * 分页查询买家订单列表
@@ -108,11 +109,6 @@ public interface OrderService {
      * @return 订单分页列表
      */
     PageResponseDTO<OrderDTO> listSellerOrdersByStatus(Integer status, int pageNum, int pageSize);
-
-    /**
-     * 卖家发货，需填写快递单号
-     */
-    OrderDTO deliverOrder(Long id, String trackingNumber);
 
     /**
      * 买家确认收货
