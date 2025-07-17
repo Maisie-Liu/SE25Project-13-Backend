@@ -484,6 +484,7 @@ public class MessageServiceImpl implements MessageService {
         if (message.getOrder() != null) {
             dto.setOrderId(message.getOrder().getId());
             dto.setBuyerName(message.getOrder().getBuyer().getUsername());
+            dto.setSellerName(message.getOrder().getSeller().getUsername());
             
             if (message.getOrder().getItem() != null) {
                 dto.setItemId(message.getOrder().getItem().getId());
