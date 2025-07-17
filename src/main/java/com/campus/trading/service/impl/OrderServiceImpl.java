@@ -511,8 +511,8 @@ public class OrderServiceImpl implements OrderService {
         Order order = getOrderOrThrow(id);
         // 检查是否是买家
         checkOrderBuyer(order);
-        // 检查订单状态，必须是待收货（2）
-        if (order.getStatus() != 2) {
+        // 检查订单状态，必须是待收货（1）
+        if (order.getStatus() != 1) {
             throw new RuntimeException("订单状态不正确，无法确认收货");
         }
         // 更新订单状态为待评价（3）
