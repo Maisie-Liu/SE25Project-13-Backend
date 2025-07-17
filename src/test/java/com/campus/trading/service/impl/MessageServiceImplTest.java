@@ -23,7 +23,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-// FIXME
 @SpringBootTest
 @ActiveProfiles("test")
 class MessageServiceImplTest {
