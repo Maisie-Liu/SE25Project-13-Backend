@@ -33,6 +33,7 @@ public class UserProfile {
      * 信誉分，初始100分
      */
     @Column(nullable = false)
+    @Builder.Default
     private Integer reputationScore = 100;
 
     public Integer getReputationScore() {
