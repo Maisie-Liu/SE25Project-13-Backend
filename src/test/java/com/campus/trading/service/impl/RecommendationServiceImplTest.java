@@ -23,7 +23,9 @@ import org.springframework.test.context.ActiveProfiles;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
@@ -41,29 +43,59 @@ class RecommendationServiceImplTest {
     @Autowired
     private RecommendationServiceImpl recommendationService;
 
-    private AutoCloseable closeable;
-
-    @BeforeEach
-    void setUp() {
-        closeable = MockitoAnnotations.openMocks(this);
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        closeable.close();
+    @Test
+    void recommendItems_profileNotFound() {
+        User user = new User();
+        when(userProfileRepository.findByUser(any(User.class))).thenReturn(java.util.Optional.empty());
+        Page<com.campus.trading.entity.Item> itemPage = new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 10), 0);
+        when(itemRepository.findAll(any(Pageable.class))).thenReturn(itemPage);
+        assertNotNull(recommendationService.recommendItems(user, 1, 10));
     }
 
     @Test
-    void recommendItems() {
-        Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
-        org.springframework.data.domain.Page<com.campus.trading.entity.Item> itemPage = new org.springframework.data.domain.PageImpl<>(
-                java.util.Collections.emptyList(),
-                pageable,
-                0
-        );
+    void recommendItems_categoryInterestEmpty() {
+        User user = new User();
+        com.campus.trading.entity.UserProfile profile = new com.campus.trading.entity.UserProfile();
+        profile.setCategoryInterest(new java.util.HashMap<>());
+        when(userProfileRepository.findByUser(any(User.class))).thenReturn(java.util.Optional.of(profile));
+        Page<com.campus.trading.entity.Item> itemPage = new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 10), 0);
         when(itemRepository.findAll(any(Pageable.class))).thenReturn(itemPage);
-        when(itemService.convertToDTO(any())).thenReturn(new com.campus.trading.dto.ItemDTO());
-        com.campus.trading.entity.User user = new com.campus.trading.entity.User();
+        assertNotNull(recommendationService.recommendItems(user, 1, 10));
+    }
+
+    @Test
+    void recommendItems_categoryInterestMulti() {
+        User user = new User();
+        com.campus.trading.entity.UserProfile profile = new com.campus.trading.entity.UserProfile();
+        java.util.Map<Long, Double> interest = new java.util.HashMap<>();
+        interest.put(1L, 2.0);
+        interest.put(2L, 3.0);
+        profile.setCategoryInterest(interest);
+        when(userProfileRepository.findByUser(any(User.class))).thenReturn(java.util.Optional.of(profile));
+        Page<com.campus.trading.entity.Item> itemPage = new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 10), 0);
+        when(itemRepository.findByCategoryIdInAndStatusOrderByPopularityDesc(anyList(), eq(1), any(Pageable.class))).thenReturn(itemPage);
+        assertNotNull(recommendationService.recommendItems(user, 1, 10));
+    }
+
+    @Test
+    void recommendItems_itemRepositoryThrows() {
+        User user = new User();
+        when(userProfileRepository.findByUser(any(User.class))).thenReturn(java.util.Optional.empty());
+        when(itemRepository.findAll(any(Pageable.class))).thenThrow(new RuntimeException("db error"));
+        assertThrows(RuntimeException.class, () -> recommendationService.recommendItems(user, 1, 10));
+    }
+
+    @Test
+    void recommendItems_itemServiceConvertToDTOReturnsNull() {
+        User user = new User();
+        com.campus.trading.entity.UserProfile profile = new com.campus.trading.entity.UserProfile();
+        java.util.Map<Long, Double> interest = new java.util.HashMap<>();
+        interest.put(1L, 2.0);
+        profile.setCategoryInterest(interest);
+        when(userProfileRepository.findByUser(any(User.class))).thenReturn(java.util.Optional.of(profile));
+        Page<com.campus.trading.entity.Item> itemPage = new PageImpl<>(Collections.singletonList(new com.campus.trading.entity.Item()), PageRequest.of(0, 10), 1);
+        when(itemRepository.findByCategoryIdInAndStatusOrderByPopularityDesc(anyList(), eq(1), any(Pageable.class))).thenReturn(itemPage);
+        when(itemService.convertToDTO(any())).thenReturn(null);
         assertNotNull(recommendationService.recommendItems(user, 1, 10));
     }
 }

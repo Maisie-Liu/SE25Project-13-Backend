@@ -26,17 +26,6 @@ class UserDetailsServiceImplTest {
     private UserRepository userRepository;
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
-    private AutoCloseable closeable;
-
-    @BeforeEach
-    void setUp() {
-        closeable = MockitoAnnotations.openMocks(this);
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        closeable.close();
-    }
 
     @Test
     void loadUserByUsername_success() {
@@ -64,5 +53,43 @@ class UserDetailsServiceImplTest {
         user.setRoles(Collections.singleton("ROLE_USER"));
         when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(user));
         assertThrows(UsernameNotFoundException.class, () -> userDetailsService.loadUserByUsername("testuser"));
+    }
+
+    @Test
+    void loadUserByUsername_multiRoles() {
+        User user = new User();
+        user.setUsername("multiRoleUser");
+        user.setPassword("123456");
+        user.setStatus(1);
+        user.setRoles(new java.util.HashSet<>(java.util.Arrays.asList("ROLE_USER", "ROLE_ADMIN")));
+        when(userRepository.findByUsername("multiRoleUser")).thenReturn(Optional.of(user));
+        var userDetails = userDetailsService.loadUserByUsername("multiRoleUser");
+        assertEquals("multiRoleUser", userDetails.getUsername());
+        assertEquals("123456", userDetails.getPassword());
+        assertTrue(userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER")));
+        assertTrue(userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")));
+        assertTrue(userDetails.isEnabled());
+    }
+
+    @Test
+    void loadUserByUsername_withEmptyUsername_throwsException() {
+        assertThrows(UsernameNotFoundException.class, () -> userDetailsService.loadUserByUsername(""));
+    }
+
+    @Test
+    void loadUserByUsername_withNullUsername_throwsException() {
+        assertThrows(UsernameNotFoundException.class, () -> userDetailsService.loadUserByUsername(null));
+    }
+
+    @Test
+    void loadUserByUsername_userWithEmptyPassword() {
+        User user = new User();
+        user.setUsername("emptyPwd");
+        user.setPassword("");
+        user.setStatus(1);
+        user.setRoles(Collections.singleton("ROLE_USER"));
+        when(userRepository.findByUsername("emptyPwd")).thenReturn(Optional.of(user));
+        var userDetails = userDetailsService.loadUserByUsername("emptyPwd");
+        assertEquals("", userDetails.getPassword());
     }
 }

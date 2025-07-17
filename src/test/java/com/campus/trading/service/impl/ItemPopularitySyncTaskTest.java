@@ -65,4 +65,77 @@ class ItemPopularitySyncTaskTest {
 
         verify(itemRepository, times(1)).save(any(com.campus.trading.entity.Item.class));
     }
+
+    @Test
+    void syncPopularityToDb_keysNull() {
+        when(stringRedisTemplate.keys("item:view:*"))
+            .thenReturn(null);
+        assertDoesNotThrow(() -> itemPopularitySyncTask.syncPopularityToDb());
+    }
+
+    @Test
+    void syncPopularityToDb_keysEmpty() {
+        when(stringRedisTemplate.keys("item:view:*"))
+            .thenReturn(new java.util.HashSet<>());
+        assertDoesNotThrow(() -> itemPopularitySyncTask.syncPopularityToDb());
+    }
+
+    @Test
+    void syncPopularityToDb_valueNull() {
+        java.util.Set<String> keys = new java.util.HashSet<>();
+        keys.add("item:view:1");
+        when(stringRedisTemplate.keys("item:view:*"))
+            .thenReturn(keys);
+        org.springframework.data.redis.core.ValueOperations valueOperations = mock(org.springframework.data.redis.core.ValueOperations.class);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("item:view:1")).thenReturn(null);
+        assertDoesNotThrow(() -> itemPopularitySyncTask.syncPopularityToDb());
+    }
+
+    @Test
+    void syncPopularityToDb_itemNotFound() {
+        java.util.Set<String> keys = new java.util.HashSet<>();
+        keys.add("item:view:1");
+        when(stringRedisTemplate.keys("item:view:*"))
+            .thenReturn(keys);
+        org.springframework.data.redis.core.ValueOperations valueOperations = mock(org.springframework.data.redis.core.ValueOperations.class);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("item:view:1")).thenReturn("10");
+        when(itemRepository.findById(1L)).thenReturn(java.util.Optional.empty());
+        assertDoesNotThrow(() -> itemPopularitySyncTask.syncPopularityToDb());
+    }
+
+    @Test
+    void syncPopularityToDb_redisGreaterThanDb() {
+        java.util.Set<String> keys = new java.util.HashSet<>();
+        keys.add("item:view:1");
+        when(stringRedisTemplate.keys("item:view:*"))
+            .thenReturn(keys);
+        org.springframework.data.redis.core.ValueOperations valueOperations = mock(org.springframework.data.redis.core.ValueOperations.class);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("item:view:1")).thenReturn("20");
+        com.campus.trading.entity.Item item = new com.campus.trading.entity.Item();
+        item.setId(1L);
+        item.setPopularity(5);
+        when(itemRepository.findById(1L)).thenReturn(java.util.Optional.of(item));
+        when(itemRepository.save(any(com.campus.trading.entity.Item.class))).thenReturn(item);
+        assertDoesNotThrow(() -> itemPopularitySyncTask.syncPopularityToDb());
+    }
+
+    @Test
+    void syncPopularityToDb_dbGreaterThanRedis() {
+        java.util.Set<String> keys = new java.util.HashSet<>();
+        keys.add("item:view:1");
+        when(stringRedisTemplate.keys("item:view:*"))
+            .thenReturn(keys);
+        org.springframework.data.redis.core.ValueOperations valueOperations = mock(org.springframework.data.redis.core.ValueOperations.class);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("item:view:1")).thenReturn("2");
+        com.campus.trading.entity.Item item = new com.campus.trading.entity.Item();
+        item.setId(1L);
+        item.setPopularity(5);
+        when(itemRepository.findById(1L)).thenReturn(java.util.Optional.of(item));
+        when(itemRepository.save(any(com.campus.trading.entity.Item.class))).thenReturn(item);
+        assertDoesNotThrow(() -> itemPopularitySyncTask.syncPopularityToDb());
+    }
 }

@@ -112,11 +112,15 @@ public class BuyRequestServiceImpl implements BuyRequestService {
         BuyRequestDTO dto = new BuyRequestDTO();
         BeanUtils.copyProperties(entity, dto);
         dto.setCategoryId(entity.getCategory() != null ? entity.getCategory().getId() : null);
-        dto.setCategoryName(entity.getCategory().getName());
+        dto.setCategoryName(entity.getCategory() != null ? entity.getCategory().getName() : null);
         dto.setCondition(entity.getRequestCondition());
-        dto.setUserId(entity.getUser().getId());
-        dto.setUsername(entity.getUser().getUsername());
-        dto.setUserAvatar(entity.getUser().getAvatarImageId() != null ? imageService.generateImageAccessToken(entity.getUser().getAvatarImageId()) : null);
+        dto.setUserId(entity.getUser() != null ? entity.getUser().getId() : null);
+        dto.setUsername(entity.getUser() != null ? entity.getUser().getUsername() : null);
+        dto.setUserAvatar(
+            entity.getUser() != null && entity.getUser().getAvatarImageId() != null
+                ? imageService.generateImageAccessToken(entity.getUser().getAvatarImageId())
+                : null
+        );
         dto.setCommentCount(entity.getComments() != null ? entity.getComments().size() : 0);
         return dto;
     }

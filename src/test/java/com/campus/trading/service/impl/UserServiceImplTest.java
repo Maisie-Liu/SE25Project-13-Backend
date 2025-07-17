@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.context.ActiveProfiles;
 
 import org.junit.jupiter.api.AfterEach;
@@ -48,17 +49,6 @@ class UserServiceImplTest {
     private UserProfileRepository userProfileRepository;
     @Autowired
     private UserServiceImpl userService;
-    private AutoCloseable closeable;
-
-    @BeforeEach
-    void setUp() {
-        closeable = MockitoAnnotations.openMocks(this);
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        closeable.close();
-    }
 
     @Test
     void register() {
@@ -68,32 +58,85 @@ class UserServiceImplTest {
     }
 
     @Test
+    void register_usernameExists() {
+        RegisterRequestDTO dto = new RegisterRequestDTO();
+        dto.setUsername("exist");
+        when(userRepository.existsByUsername("exist")).thenReturn(true);
+        assertThrows(RuntimeException.class, () -> userService.register(dto));
+    }
+
+    @Test
+    void register_emailExists() {
+        RegisterRequestDTO dto = new RegisterRequestDTO();
+        dto.setEmail("exist@test.com");
+        when(userRepository.existsByEmail("exist@test.com")).thenReturn(true);
+        assertThrows(RuntimeException.class, () -> userService.register(dto));
+    }
+
+    @Test
+    void register_phoneExists() {
+        RegisterRequestDTO dto = new RegisterRequestDTO();
+        dto.setPhone("12345678901");
+        when(userRepository.existsByPhone("12345678901")).thenReturn(true);
+        assertThrows(RuntimeException.class, () -> userService.register(dto));
+    }
+
+    @Test
+    void register_saveThrows() {
+        RegisterRequestDTO dto = new RegisterRequestDTO();
+        when(userRepository.save(any())).thenThrow(new RuntimeException("save error"));
+        assertThrows(RuntimeException.class, () -> userService.register(dto));
+    }
+
+    @Test
     void login() {
         LoginRequestDTO loginRequestDTO = new LoginRequestDTO();
         loginRequestDTO.setUsername("testuser");
         loginRequestDTO.setPassword("password");
-
         User user = new User();
         user.setUsername("testuser");
         user.setPassword("encodedPassword");
-        // user.setEnabled(true); // 已去除
-
         when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-
-        // mock UserDetails
         org.springframework.security.core.userdetails.UserDetails userDetails =
-            org.springframework.security.core.userdetails.User.withUsername("testuser")
-                .password("encodedPassword")
-                .roles("USER")
-                .build();
-
+                org.springframework.security.core.userdetails.User.withUsername("testuser")
+                        .password("encodedPassword").roles("USER").build();
         when(jwtUtils.generateToken(any(org.springframework.security.core.userdetails.UserDetails.class)))
-            .thenReturn("token");
-
+                .thenReturn("token");
         LoginResponseDTO response = userService.login(loginRequestDTO);
         assertNotNull(response);
         assertEquals("token", response.getToken());
+    }
+
+    @Test
+    void login_userNotFound() {
+        LoginRequestDTO loginRequestDTO = new LoginRequestDTO();
+        loginRequestDTO.setUsername("notfound");
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> userService.login(loginRequestDTO));
+    }
+
+    @Test
+    void login_passwordNotMatch() {
+        LoginRequestDTO loginRequestDTO = new LoginRequestDTO();
+        loginRequestDTO.setUsername("testuser");
+        loginRequestDTO.setPassword("wrong");
+        when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("Bad credentials"));
+        assertThrows(RuntimeException.class, () -> userService.login(loginRequestDTO));
+    }
+
+    @Test
+    void login_tokenException() {
+        LoginRequestDTO loginRequestDTO = new LoginRequestDTO();
+        loginRequestDTO.setUsername("testuser");
+        loginRequestDTO.setPassword("password");
+        User user = new User();
+        user.setUsername("testuser");
+        user.setPassword("encodedPassword");
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
+        when(jwtUtils.generateToken(any())).thenThrow(new RuntimeException("token error"));
+        assertThrows(RuntimeException.class, () -> userService.login(loginRequestDTO));
     }
 
     @Test
@@ -101,7 +144,6 @@ class UserServiceImplTest {
         User user = new User();
         user.setUsername("testuser");
         when(userRepository.findByUsername(anyString())).thenReturn(java.util.Optional.of(user));
-        // mock SecurityContextHolder
         SecurityContext securityContext = mock(SecurityContext.class);
         Authentication authentication = mock(Authentication.class);
         when(authentication.getName()).thenReturn("testuser");
@@ -112,15 +154,47 @@ class UserServiceImplTest {
     }
 
     @Test
+    void getCurrentUser_noAuth() {
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(null);
+        SecurityContextHolder.setContext(securityContext);
+        assertThrows(RuntimeException.class, () -> userService.getCurrentUser());
+    }
+
+    @Test
+    void getCurrentUser_userNotFound() {
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
+        SecurityContext securityContext = mock(SecurityContext.class);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("notfound");
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        assertThrows(RuntimeException.class, () -> userService.getCurrentUser());
+    }
+
+    @Test
     void findByUsername() {
         when(userRepository.findByUsername(anyString())).thenReturn(java.util.Optional.of(new User()));
         assertNotNull(userService.findByUsername("test"));
     }
 
     @Test
+    void findByUsername_notFound() {
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> userService.findByUsername("notfound"));
+    }
+
+    @Test
     void findById() {
         when(userRepository.findById(anyLong())).thenReturn(java.util.Optional.of(new User()));
         assertNotNull(userService.findById(1L));
+    }
+
+    @Test
+    void findById_notFound() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
+        assertThrows(RuntimeException.class, () -> userService.findById(2L));
     }
 
     @Test
@@ -131,13 +205,24 @@ class UserServiceImplTest {
         user.setUsername("testuser");
         when(userRepository.findByUsername(anyString())).thenReturn(java.util.Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
-        // mock SecurityContextHolder
         SecurityContext securityContext = mock(SecurityContext.class);
         Authentication authentication = mock(Authentication.class);
         when(authentication.getName()).thenReturn("testuser");
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
         assertNotNull(userService.updateUser(dto));
+    }
+
+    @Test
+    void updateUser_userNotFound() {
+        UserDTO dto = new UserDTO();
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
+        SecurityContext securityContext = mock(SecurityContext.class);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("notfound");
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        assertThrows(RuntimeException.class, () -> userService.updateUser(dto));
     }
 
     @Test
@@ -149,13 +234,53 @@ class UserServiceImplTest {
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
         when(passwordEncoder.encode(anyString())).thenReturn("newHash");
         when(userRepository.save(any(User.class))).thenReturn(user);
-        // mock SecurityContextHolder
         SecurityContext securityContext = mock(SecurityContext.class);
         Authentication authentication = mock(Authentication.class);
         when(authentication.getName()).thenReturn("testuser");
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
         assertTrue(userService.updatePassword("old", "new"));
+    }
+
+    @Test
+    void updatePassword_userNotFound() {
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
+        SecurityContext securityContext = mock(SecurityContext.class);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("notfound");
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        assertThrows(RuntimeException.class, () -> userService.updatePassword("old", "new"));
+    }
+
+    @Test
+    void updatePassword_oldPasswordNotMatch() {
+        User user = new User();
+        user.setUsername("testuser");
+        user.setPassword("oldHash");
+        when(userRepository.findByUsername(anyString())).thenReturn(java.util.Optional.of(user));
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("testuser");
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        assertFalse(userService.updatePassword("old", "new"));
+    }
+
+    @Test
+    void updatePassword_newPasswordEmpty() {
+        User user = new User();
+        user.setUsername("testuser");
+        user.setPassword("oldHash");
+        when(userRepository.findByUsername(anyString())).thenReturn(java.util.Optional.of(user));
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("testuser");
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        assertFalse(userService.updatePassword("old", ""));
     }
 
     @Test
@@ -184,25 +309,30 @@ class UserServiceImplTest {
 
     @Test
     void updateImageId() {
-        // 构造 mock 用户
         User user = new User();
         user.setUsername("testuser");
         user.setId(1L);
-
-        // mock repository
         when(userRepository.findByUsername(eq("testuser"))).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
-
-        // mock SecurityContext
         Authentication authentication = mock(Authentication.class);
         when(authentication.getName()).thenReturn("testuser");
-        when(authentication.isAuthenticated()).thenReturn(true); // 补充
+        when(authentication.isAuthenticated()).thenReturn(true);
         SecurityContext securityContext = mock(SecurityContext.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
-
-        // 执行
         assertDoesNotThrow(() -> userService.updateImageId("img123"));
+    }
+
+    @Test
+    void updateImageId_userNotFound() {
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("notfound");
+        when(authentication.isAuthenticated()).thenReturn(true);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        assertThrows(RuntimeException.class, () -> userService.updateImageId("img123"));
     }
 
     @Test
@@ -211,6 +341,12 @@ class UserServiceImplTest {
         user.setId(1L);
         when(userRepository.findById(anyLong())).thenReturn(java.util.Optional.of(user));
         assertNotNull(userService.getUserPublicProfile(1L));
+    }
+
+    @Test
+    void getUserPublicProfile_notFound() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
+        assertNull(userService.getUserPublicProfile(2L));
     }
 
     @Test

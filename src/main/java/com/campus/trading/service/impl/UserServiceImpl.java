@@ -197,7 +197,12 @@ public class UserServiceImpl implements UserService {
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             return false;
         }
-        
+
+        // 新密码不能为空
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            return false;
+        }
+
         // 更新密码
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);

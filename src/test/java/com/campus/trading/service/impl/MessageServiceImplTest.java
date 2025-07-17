@@ -23,7 +23,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-
+// FIXME
 @SpringBootTest
 @ActiveProfiles("test")
 class MessageServiceImplTest {
@@ -59,6 +59,12 @@ class MessageServiceImplTest {
     }
 
     @Test
+    void getAllMessages_userNotFound() {
+        when(userRepository.findById(2L)).thenReturn(java.util.Optional.empty());
+        assertThrows(RuntimeException.class, () -> messageService.getAllMessages(2L, pageable));
+    }
+
+    @Test
     void markAsRead() {
         Message message = new CommentMessage();
         message.setId(1L);
@@ -68,10 +74,22 @@ class MessageServiceImplTest {
     }
 
     @Test
+    void markAsRead_messageNotFound() {
+        when(messageRepository.findById(2L)).thenReturn(java.util.Optional.empty());
+        assertThrows(RuntimeException.class, () -> messageService.markAsRead(2L));
+    }
+
+    @Test
     void countUnreadMessages() {
         when(messageRepository.countByRecipientAndReadFalse(user)).thenReturn(5L);
         long count = messageService.countUnreadMessages(1L);
         assertEquals(5L, count);
+    }
+
+    @Test
+    void countUnreadMessages_userNotFound() {
+        when(userRepository.findById(2L)).thenReturn(java.util.Optional.empty());
+        assertThrows(RuntimeException.class, () -> messageService.countUnreadMessages(2L));
     }
 
     @Test
@@ -104,24 +122,18 @@ class MessageServiceImplTest {
     @Test
     void getOrderMessages() {
         OrderMessage orderMessage = new OrderMessage();
-        User sender = new User(); sender.setUsername("sender");
-        User recipient = new User(); recipient.setUsername("recipient");
-        Item item = new Item(); item.setName("itemName");
-        Order order = new Order();
-        order.setItem(item);
-        order.setBuyer(sender); // 补全
-        order.setSeller(recipient); // 补全
-        order.setAmount(java.math.BigDecimal.valueOf(100)); // 补全金额
-        orderMessage.setSender(sender);
-        orderMessage.setRecipient(recipient);
-        orderMessage.setOrder(order);
-        orderMessage.setStatus("created");
-        orderMessage.setStatusText("已创建");
+        orderMessage.setStatus("created"); // 避免NPE
         Page<Message> page = new PageImpl<>(Collections.singletonList(orderMessage));
         when(messageRepository.findByRecipientAndMessageTypeOrderByCreatedAtDesc(user, "ORDER", pageable)).thenReturn(page);
         var result = messageService.getOrderMessages(1L, pageable);
         assertNotNull(result);
         assertEquals(1, result.getList().size());
+    }
+
+    @Test
+    void getOrderMessages_userNotFound() {
+        when(userRepository.findById(2L)).thenReturn(java.util.Optional.empty());
+        assertThrows(RuntimeException.class, () -> messageService.getOrderMessages(2L, pageable));
     }
 
     @Test
@@ -149,6 +161,12 @@ class MessageServiceImplTest {
     }
 
     @Test
+    void markAllAsRead_userNotFound() {
+        when(userRepository.findById(2L)).thenReturn(java.util.Optional.empty());
+        assertThrows(RuntimeException.class, () -> messageService.markAllAsRead(2L));
+    }
+
+    @Test
     void markAllAsReadByType() {
         when(messageRepository.findUnreadMessagesByType(user, "COMMENT")).thenReturn(Collections.emptyList());
         assertDoesNotThrow(() -> messageService.markAllAsReadByType(1L, "COMMENT"));
@@ -167,6 +185,11 @@ class MessageServiceImplTest {
     }
 
     @Test
+    void createCommentMessage_null() {
+        assertThrows(NullPointerException.class, () -> messageService.createCommentMessage(null));
+    }
+
+    @Test
     void createFavoriteMessage() {
         Favorite favorite = new Favorite();
         Item item = new Item();
@@ -176,6 +199,11 @@ class MessageServiceImplTest {
         FavoriteMessage message = new FavoriteMessage();
         when(messageRepository.save(any(FavoriteMessage.class))).thenReturn(message);
         assertNotNull(messageService.createFavoriteMessage(favorite));
+    }
+
+    @Test
+    void createFavoriteMessage_null() {
+        assertThrows(NullPointerException.class, () -> messageService.createFavoriteMessage(null));
     }
 
     @Test
@@ -201,10 +229,29 @@ class MessageServiceImplTest {
     }
 
     @Test
+    void createOrderMessage_saveException() {
+        Order order = new Order();
+        User buyer = new User(); buyer.setId(2L); buyer.setUsername("buyer");
+        User seller = new User(); seller.setId(3L); seller.setUsername("seller");
+        Item item = new Item(); item.setName("itemName");
+        order.setBuyer(buyer);
+        order.setSeller(seller);
+        order.setItem(item);
+        order.setAmount(java.math.BigDecimal.valueOf(100));
+        when(messageRepository.save(any(OrderMessage.class))).thenThrow(new RuntimeException("db error"));
+        assertThrows(RuntimeException.class, () -> messageService.createOrderMessage(order, "created", "已创建", "订单已创建"));
+    }
+
+    @Test
     void saveCommentMessage() {
         CommentMessage commentMessage = new CommentMessage();
         when(messageRepository.save(commentMessage)).thenReturn(commentMessage);
         assertNotNull(messageService.saveCommentMessage(commentMessage));
+    }
+
+    @Test
+    void saveCommentMessage_null() {
+        assertThrows(NullPointerException.class, () -> messageService.saveCommentMessage(null));
     }
 
     @Test
@@ -224,6 +271,11 @@ class MessageServiceImplTest {
         favoriteMessage.setFavorite(favorite);
         when(messageRepository.save(favoriteMessage)).thenReturn(favoriteMessage);
         assertNotNull(messageService.saveFavoriteMessage(favoriteMessage));
+    }
+
+    @Test
+    void saveFavoriteMessage_null() {
+        assertThrows(NullPointerException.class, () -> messageService.saveFavoriteMessage(null));
     }
 
     @Test

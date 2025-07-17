@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityNotFoundException;
 import java.security.Principal;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -225,9 +226,12 @@ public class FavoriteServiceImpl implements FavoriteService {
                     .map(favorite -> {
                         ItemDTO dto = itemService.convertToDTO(favorite.getItem());
                         // 设置收藏ID
-                        dto.setFavoriteId(favorite.getId());
+                        if (dto != null) {
+                            dto.setFavoriteId(favorite.getId());
+                        }
                         return dto;
                     })
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
             
             // 构建分页响应

@@ -333,6 +333,7 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @Transactional
     public CommentMessage saveCommentMessage(CommentMessage commentMessage) {
+        if (commentMessage == null) throw new NullPointerException("commentMessage is null");
         return (CommentMessage) messageRepository.save(commentMessage);
     }
     

@@ -15,20 +15,21 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.mockito.Mockito.*;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @SpringBootTest
 @ActiveProfiles("test")
 class ImageServiceImplTest {
-    @Mock
+    @MockBean
     private com.campus.trading.dao.ImageDAO imageDAO;
-    @Mock
+    @MockBean
     private com.campus.trading.config.JwtUtils jwtUtils;
-    @InjectMocks
+    @Autowired
     private ImageServiceImpl imageService;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         // 手动赋值，防止NPE
         try {
             java.lang.reflect.Field field = ImageServiceImpl.class.getDeclaredField("imageUrlPrefix");
@@ -105,5 +106,43 @@ class ImageServiceImplTest {
     void getImageFileLength() {
         when(imageDAO.getImageFileLengthById(anyString())).thenReturn(123L);
         assertEquals(123L, imageService.getImageFileLength("imgid"));
+    }
+
+    @Test
+    void getImageUrl_null() {
+        assertNull(imageService.getImageUrl(null));
+        assertNull(imageService.getImageUrl(""));
+    }
+
+    @Test
+    void getImageUrl_forAI_emptyPrefix() throws Exception {
+        java.lang.reflect.Field aiField = ImageServiceImpl.class.getDeclaredField("aiImageUrlPrefix");
+        aiField.setAccessible(true);
+        aiField.set(imageService, "");
+        String url = imageService.getImageUrl("imgid", true);
+        assertTrue(url.contains("/api/image/"));
+    }
+
+    @Test
+    void getImageUrl_forAI_nonEmptyPrefix() throws Exception {
+        java.lang.reflect.Field aiField = ImageServiceImpl.class.getDeclaredField("aiImageUrlPrefix");
+        aiField.setAccessible(true);
+        aiField.set(imageService, "/api/ai-image/");
+        String url = imageService.getImageUrl("imgid", true);
+        assertTrue(url.contains("/api/ai-image/"));
+    }
+
+    @Test
+    void generateImageAccessToken_jwtException() {
+        when(jwtUtils.generateImageToken(anyString())).thenThrow(new RuntimeException("jwt error"));
+        assertThrows(RuntimeException.class, () -> imageService.generateImageAccessToken("imgid"));
+    }
+
+    @Test
+    void uploadImage_exception() throws IOException {
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.getContentType()).thenReturn("image/png");
+        when(imageDAO.storeImage(any(), any())).thenThrow(new IOException("io error"));
+        assertThrows(IOException.class, () -> imageService.uploadImage(file));
     }
 }
