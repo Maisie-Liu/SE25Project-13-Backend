@@ -22,7 +22,7 @@ import java.util.UUID;
 /**
  * 定金托管服务实现
  */
-@Slf4j
+
 @Service
 public class EscrowServiceImpl implements EscrowService {
     
