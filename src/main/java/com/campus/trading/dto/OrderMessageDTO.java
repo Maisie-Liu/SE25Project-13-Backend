@@ -20,4 +20,5 @@ public class OrderMessageDTO extends MessageDTO {
     private String statusDescription;
     private Integer step;
     private String buyerName;
+    private String sellerName;
 } 
